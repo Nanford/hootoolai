@@ -1,0 +1,60 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  name           String?
+  email          String   @unique
+  emailVerified  DateTime?
+  password       String
+  image          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  isAdmin        Boolean  @default(false)
+  isPremium      Boolean  @default(false)
+  verificationToken String?
+  resetToken     String?
+  resetTokenExpiry DateTime?
+  artworks       Artwork[]
+  imageProcessings ImageProcessing[]
+}
+
+model Artwork {
+  id        String   @id @default(cuid())
+  title     String?
+  prompt    String
+  imageUrl  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+}
+
+model ImageProcessing {
+  id          String   @id @default(cuid())
+  originalUrl String
+  processedUrl String
+  processType String
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+}
+
+model VerificationCode {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  type      String // "register", "reset", "change_email"
+  expires   DateTime
+  createdAt DateTime @default(now())
+  
+  @@unique([email, type])
+}

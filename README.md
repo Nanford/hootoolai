@@ -1,36 +1,87 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# HooTool AI - 智能AI工具平台
 
-## Getting Started
+HooTool AI是一个综合性的AI工具平台，提供多种AI驱动的服务，包括图片处理和艺术卡片生成。项目使用Next.js开发，结合了最先进的AI API来提供高质量的AI生成内容。
 
-First, run the development server:
+## 主要功能
+
+- **用户认证系统**
+  - 邮箱注册和登录
+  - 邮箱验证
+  - 密码重置
+  - 个人资料管理
+
+- **AI图片处理**（由Google Gemini提供支持）
+  - 画质增强
+  - 风格转换
+  - 背景移除
+  - 黑白图片上色
+
+- **AI艺术卡片生成**（由Anthropic Claude 3.7 Sonnet提供支持）
+  - 多种艺术风格选择
+  - 可自定义氛围和光线
+  - 支持详细的提示词定制
+  - 多种输出尺寸比例
+
+## 技术栈
+
+- **前端**：Next.js, React, TailwindCSS
+- **后端**：Next.js API Routes
+- **数据库**：SQLite (Prisma ORM)
+- **认证**：NextAuth.js
+- **AI API**：
+  - Anthropic Claude 3.7 Sonnet API (艺术卡片生成)
+  - Google Gemini API (图片处理)
+
+## 本地开发
+
+### 准备工作
+
+1. 克隆仓库:
+```bash
+git clone https://your-repository-url.git
+cd hootoolai
+```
+
+2. 安装依赖:
+```bash
+npm install
+```
+
+3. 配置环境变量:
+重命名`.env.example`为`.env.local`并填写相关API密钥和配置信息。
+
+4. 初始化数据库:
+```bash
+npx prisma migrate dev
+```
+
+### 启动开发服务器
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+访问 [http://localhost:3000](http://localhost:3000) 查看应用。
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## 环境变量配置
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+项目需要以下环境变量:
 
-## Learn More
+- `DATABASE_URL`: 数据库连接URL
+- `NEXTAUTH_URL`: NextAuth URL (开发环境为http://localhost:3000)
+- `NEXTAUTH_SECRET`: NextAuth密钥
+- `EMAIL_SERVER_*`: 邮件服务器配置
+- `ANTHROPIC_API_KEY`: Anthropic Claude API密钥
+- `GEMINI_API_KEY`: Google Gemini API密钥
 
-To learn more about Next.js, take a look at the following resources:
+## 部署
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+项目可以部署到Vercel等支持Next.js的平台:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run build
+```
 
-## Deploy on Vercel
+## 许可证
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+本项目使用MIT许可证
