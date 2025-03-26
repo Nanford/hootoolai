@@ -100,7 +100,7 @@ export default function HomePage() {
             {status === 'authenticated' ? (
               <Link 
                 href="/dashboard/profile" 
-                className="text-sm font-semibold leading-6 text-white bg-white bg-opacity-20 px-4 py-2 rounded-full hover:bg-opacity-30 transition"
+                className="text-sm font-semibold leading-6 text-blue-600 bg-white px-4 py-2 rounded-lg hover:bg-gray-100 transition"
               >
                 个人中心
               </Link>
@@ -108,13 +108,13 @@ export default function HomePage() {
               <>
                 <Link 
                   href="/login" 
-                  className="text-sm font-semibold leading-6 text-blue-600 bg-white px-6 py-2 rounded-xl hover:bg-gray-100 transition"
+                  className="text-sm font-semibold leading-6 text-blue-600 bg-white px-6 py-2 rounded-lg hover:bg-gray-100 transition"
                 >
                   登录
                 </Link>
                 <Link 
                   href="/register" 
-                  className="text-sm font-semibold leading-6 text-blue-600 bg-white px-6 py-2  rounded-xl hover:bg-gray-100 transition"
+                  className="text-sm font-semibold leading-6 text-blue-600 bg-white px-6 py-2 rounded-lg hover:bg-gray-100 transition"
                 >
                   注册
                 </Link>
@@ -137,13 +137,13 @@ export default function HomePage() {
             <div className="flex flex-wrap gap-4">
               <Link
                 href={status === 'authenticated' ? '/tools/image-processing' : '/register'}
-                className="px-8 py-3.5 bg-white text-blue-600 rounded-md font-bold text-lg hover:bg-gray-100 transition shadow-md"
+                className="px-8 py-3.5 bg-white text-blue-600 rounded-lg font-bold text-lg hover:bg-gray-100 transition shadow-md"
               >
                 {status === 'authenticated' ? '开始创作' : '免费注册'}
               </Link>
               <Link 
                 href="#features" 
-                className="px-8 py-3.5 bg-transparent border-2 border-white text-white rounded-md font-bold text-lg hover:bg-white hover:bg-opacity-10 transition"
+                className="px-8 py-3.5 bg-transparent border-2 border-white text-white rounded-lg font-bold text-lg hover:bg-white hover:text-blue-600 transition"
               >
                 了解更多
               </Link>
@@ -356,13 +356,13 @@ export default function HomePage() {
           <div className="flex flex-wrap justify-center gap-4">
             <Link
               href={status === 'authenticated' ? '/tools/image-processing' : '/register'}
-              className="px-10 py-4 bg-white text-blue-600 rounded-md font-bold text-lg hover:bg-gray-100 transition shadow-md"
+              className="px-10 py-4 bg-white text-blue-600 rounded-lg font-bold text-lg hover:bg-gray-100 transition shadow-md"
             >
               {status === 'authenticated' ? '开始创作' : '立即注册'}
             </Link>
             <Link 
               href={status === 'authenticated' ? '/tools/art-generation' : '/login'} 
-              className="px-10 py-4 bg-transparent border-2 border-white text-white rounded-md font-bold text-lg hover:bg-white hover:bg-opacity-10 transition"
+              className="px-10 py-4 bg-transparent border-2 border-white text-white rounded-lg font-bold text-lg hover:bg-white hover:text-blue-600 transition"
             >
               {status === 'authenticated' ? '艺术卡片生成' : '登录账户'}
             </Link>

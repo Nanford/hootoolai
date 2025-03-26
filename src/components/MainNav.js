@@ -54,38 +54,45 @@ export function MainNav() {
   ];
 
   return (
-    <div className="flex h-full flex-col bg-white shadow-sm border-r">
-      <div className="flex h-14 items-center border-b px-4">
+    <div className="flex h-full flex-col bg-gradient-to-b from-blue-600 to-purple-700 text-white">
+      <div className="flex h-16 items-center px-4 border-b border-white border-opacity-20">
         <Link href="/" className="flex items-center gap-2 font-semibold">
-          <SparklesIcon className="h-6 w-6 text-blue-500" />
-          <span className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-            HooTool AI
+          <SparklesIcon className="h-6 w-6 text-white" />
+          <span className="text-xl font-bold text-white">
+            HOOTOOL AI
           </span>
         </Link>
       </div>
-      <div className="flex-1 overflow-auto py-2">
+      <div className="flex-1 overflow-auto py-4">
         <nav className="grid items-start px-2 gap-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-blue-500 ${
-                item.active 
-                  ? 'bg-blue-50 text-blue-600 font-medium' 
-                  : 'text-gray-500 hover:bg-blue-50'
-              }`}
-            >
-              <item.icon className="h-5 w-5" />
-              <span>{item.name}</span>
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            return item.active ? (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 bg-white text-blue-600 font-medium transition-all"
+              >
+                <item.icon className="h-5 w-5 text-blue-600" />
+                <span>{item.name}</span>
+              </Link>
+            ) : (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-white hover:bg-white hover:text-blue-600 transition-all"
+              >
+                <item.icon className="h-5 w-5 text-white" />
+                <span>{item.name}</span>
+              </Link>
+            );
+          })}
         </nav>
       </div>
       {session ? (
-        <div className="mt-auto p-4 border-t">
+        <div className="mt-auto p-4 border-t border-white border-opacity-20">
           <div className="flex items-center gap-3 py-2">
             <div className="flex-shrink-0">
-              <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+              <div className="h-9 w-9 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
                 {session.user?.image ? (
                   <img 
                     src={session.user.image} 
@@ -93,19 +100,19 @@ export function MainNav() {
                     className="h-8 w-8 rounded-full" 
                   />
                 ) : (
-                  <UserCircleIcon className="h-6 w-6 text-blue-500" />
+                  <UserCircleIcon className="h-6 w-6 text-white" />
                 )}
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="truncate text-sm font-medium">{session.user?.name || session.user?.email}</p>
+              <p className="truncate text-sm font-medium text-white">{session.user?.name || session.user?.email}</p>
             </div>
             <button 
               onClick={() => signOut()} 
-              className="rounded p-1 hover:bg-gray-100"
+              className="rounded p-1.5 bg-blue-500 hover:bg-white hover:text-blue-600 transition group"
               aria-label="登出"
             >
-              <ArrowLeftOnRectangleIcon className="h-5 w-5 text-gray-500" />
+              <ArrowLeftOnRectangleIcon className="h-5 w-5 text-white group-hover:text-blue-600" />
             </button>
           </div>
         </div>

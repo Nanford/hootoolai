@@ -96,25 +96,25 @@ export default function ImageProcessingPage() {
   };
 
   return (
-    <div className="container mx-auto py-6">
+    <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">AI图片处理</h1>
+        <h1 className="text-2xl font-bold text-gray-900">AI图片处理</h1>
         <p className="mt-2 text-gray-600">使用先进的AI技术为您的图片增添魔力，让图片焕然一新。</p>
         {isDemo && (
-          <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+          <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
             <p className="text-yellow-700 text-sm">当前为演示模式，实际处理功能需要正确配置API密钥。</p>
           </div>
         )}
         {errorMessage && (
-          <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-md">
+          <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-red-700 text-sm">{errorMessage}</p>
           </div>
         )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-1 bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">处理选项</h2>
+        <div className="md:col-span-1 bg-white rounded-lg shadow-md p-6 border border-gray-100">
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">处理选项</h2>
           
           <div className="space-y-4">
             {processingOptions.map((option) => (
@@ -140,7 +140,7 @@ export default function ImageProcessingPage() {
               type="button"
               onClick={handleProcess}
               disabled={!selectedFile || isProcessing}
-              className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full inline-flex justify-center items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               {isProcessing ? (
                 <>
@@ -155,14 +155,14 @@ export default function ImageProcessingPage() {
         </div>
 
         <div className="md:col-span-2 space-y-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">上传图片</h2>
+          <div className="bg-white rounded-lg shadow-md p-6 border border-gray-100">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">上传图片</h2>
             <div
               {...getRootProps()}
-              className={`mt-2 flex justify-center rounded-lg border border-dashed px-6 py-10 ${
+              className={`mt-2 flex justify-center rounded-lg border-2 border-dashed px-6 py-10 ${
                 isDragActive 
                   ? 'border-blue-400 bg-blue-50' 
-                  : 'border-gray-300 hover:border-gray-400'
+                  : 'border-gray-300 hover:border-blue-400'
               }`}
             >
               <div className="text-center">
@@ -170,7 +170,7 @@ export default function ImageProcessingPage() {
                   className="mx-auto h-12 w-12 text-gray-300"
                   aria-hidden="true"
                 />
-                <div className="mt-4 flex text-sm leading-6 text-gray-600">
+                <div className="mt-4 flex flex-wrap justify-center text-sm leading-6 text-gray-600">
                   <label
                     htmlFor="file-upload"
                     className="relative cursor-pointer rounded-md bg-white font-semibold text-blue-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-600 focus-within:ring-offset-2 hover:text-blue-500"
@@ -186,8 +186,8 @@ export default function ImageProcessingPage() {
           </div>
 
           {(previewUrl || processedUrl) && (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4">
+            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-100">
+              <h2 className="text-xl font-semibold mb-4 text-gray-800">
                 {processedUrl ? '处理结果' : '预览图片'}
               </h2>
               
@@ -221,7 +221,7 @@ export default function ImageProcessingPage() {
                       <button
                         type="button"
                         onClick={handleDownload}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
                       >
                         下载图片
                       </button>

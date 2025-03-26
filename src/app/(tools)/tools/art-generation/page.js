@@ -127,17 +127,17 @@ export default function ArtGenerationPage() {
   };
 
   return (
-    <div className="container mx-auto py-6">
+    <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">AI艺术卡片生成</h1>
+        <h1 className="text-2xl font-bold text-gray-900">AI艺术卡片生成</h1>
         <p className="mt-2 text-gray-600">使用Claude 3.7 Sonnet AI创建精美的艺术卡片，只需输入您想要的内容即可。</p>
         {isDemo && (
-          <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+          <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
             <p className="text-yellow-700 text-sm">当前为演示模式，实际生成功能需要正确配置API密钥。</p>
           </div>
         )}
         {errorMessage && (
-          <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-md">
+          <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-red-700 text-sm">{errorMessage}</p>
           </div>
         )}
@@ -145,8 +145,8 @@ export default function ArtGenerationPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-1 space-y-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">创作设置</h2>
+          <div className="bg-white rounded-lg shadow-md p-6 border border-gray-100">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">创作设置</h2>
             
             <div className="space-y-4">
               <div>
@@ -253,7 +253,7 @@ export default function ArtGenerationPage() {
                       className={`
                         flex items-center justify-center py-2 px-3 rounded-md border cursor-pointer text-sm
                         ${selectedRatio === ratio.id 
-                          ? 'bg-blue-50 border-blue-500 text-blue-700' 
+                          ? 'bg-blue-100 border-blue-600 text-blue-700 font-medium' 
                           : 'border-gray-300 text-gray-700 hover:bg-gray-50'}
                       `}
                       onClick={() => setSelectedRatio(ratio.id)}
@@ -270,7 +270,7 @@ export default function ArtGenerationPage() {
                 type="button"
                 onClick={handleGenerate}
                 disabled={isGenerating || !prompt.trim()}
-                className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full inline-flex justify-center items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
               >
                 {isGenerating ? (
                   <>
@@ -288,12 +288,12 @@ export default function ArtGenerationPage() {
           </div>
 
           {generatedUrl && (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4">保存作品</h2>
+            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-100">
+              <h2 className="text-xl font-semibold mb-4 text-gray-800">保存作品</h2>
               <button
                 type="button"
                 onClick={handleDownload}
-                className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="w-full inline-flex justify-center items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
               >
                 下载图片
               </button>
@@ -302,8 +302,8 @@ export default function ArtGenerationPage() {
         </div>
 
         <div className="md:col-span-2">
-          <div className="bg-white rounded-lg shadow p-6 h-full flex flex-col">
-            <h2 className="text-xl font-semibold mb-4">生成结果</h2>
+          <div className="bg-white rounded-lg shadow-md p-6 border border-gray-100 h-full flex flex-col">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">生成结果</h2>
             
             {isGenerating ? (
               <div className="flex-1 flex flex-col items-center justify-center p-12">
@@ -340,7 +340,7 @@ export default function ArtGenerationPage() {
         </div>
       </div>
 
-      <div className="mt-8 bg-blue-50 rounded-lg p-4">
+      <div className="mt-8 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-100">
         <h2 className="text-lg font-medium text-blue-800 mb-2">提示技巧</h2>
         <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
           <li>使用具体详细的描述会获得更好的结果</li>
