@@ -3,18 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 8088",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 8088",
     "lint": "next lint",
-    "demo": "cross-env NODE_ENV=development NEXT_PUBLIC_DEMO_MODE=true next dev"
+    "demo": "cross-env NODE_ENV=development NEXT_PUBLIC_DEMO_MODE=true next dev -p 8088"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@auth/prisma-adapter": "^2.8.0",
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
     "@prisma/client": "^6.5.0",
     "axios": "^1.8.4",
     "bcryptjs": "^3.0.2",
+    "dotenv": "^16.4.7",
     "next": "15.2.4",
     "next-auth": "^4.24.11",
     "nodemailer": "^6.10.0",

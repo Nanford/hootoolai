@@ -1,352 +1,201 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import { toast } from 'react-hot-toast';
-import { ArrowPathIcon, SparklesIcon } from '@heroicons/react/24/outline';
-import axios from 'axios';
 
-const styleOptions = [
-  { id: 'watercolor', name: '水彩风格', description: '轻柔梦幻的水彩艺术效果' },
-  { id: 'oil-painting', name: '油画风格', description: '质感丰富的经典油画效果' },
-  { id: 'cartoon', name: '卡通风格', description: '可爱生动的卡通插画效果' },
-  { id: 'anime', name: '动漫风格', description: '日式动漫插画风格' },
-  { id: 'pixel-art', name: '像素艺术', description: '复古游戏像素风格' },
-];
-
-const ratioOptions = [
-  { id: 'square', name: '正方形 1:1', value: '1:1' },
-  { id: 'portrait', name: '竖版 2:3', value: '2:3' },
-  { id: 'landscape', name: '横版 3:2', value: '3:2' },
-];
-
-const moodOptions = [
-  { id: 'happy', name: '欢快的', description: '充满活力和喜悦的情绪' },
-  { id: 'peaceful', name: '平静的', description: '宁静、安详的氛围' },
-  { id: 'dramatic', name: '戏剧性的', description: '强烈对比和情感表达' },
-  { id: 'mysterious', name: '神秘的', description: '带有一丝谜感和好奇' },
-  { id: 'romantic', name: '浪漫的', description: '温馨、柔和的氛围' },
-];
-
-const lightingOptions = [
-  { id: 'natural', name: '自然光', description: '自然柔和的光线' },
-  { id: 'sunset', name: '日落', description: '温暖金色的光线' },
-  { id: 'dramatic', name: '戏剧性光线', description: '强烈对比的光影效果' },
-  { id: 'soft', name: '柔光', description: '柔和散射的光线' },
+// 设计风格选项
+const designStyles = [
+  { id: 'minimalist', name: '极简主义风格' },
+  { id: 'bold_modern', name: '大胆现代风格' },
+  { id: 'elegant_vintage', name: '优雅复古风格' },
+  { id: 'futuristic', name: '极致未来主义风格' },
+  { id: 'contemporary_art', name: '当代艺术风格' },
+  { id: 'luxury_baroque', name: '奢华巴洛克风格' },
+  { id: 'organic_natural', name: '有机自然风格' },
+  { id: 'art_nouveau', name: '新艺术主义风格' }
 ];
 
 export default function ArtGenerationPage() {
   const [prompt, setPrompt] = useState('');
-  const [generatedUrl, setGeneratedUrl] = useState(null);
-  const [selectedStyle, setSelectedStyle] = useState(styleOptions[0].id);
-  const [selectedRatio, setSelectedRatio] = useState(ratioOptions[0].id);
-  const [selectedMood, setSelectedMood] = useState(moodOptions[0].id);
-  const [selectedLighting, setSelectedLighting] = useState(lightingOptions[0].id);
-  const [additionalDetails, setAdditionalDetails] = useState('');
+  const [style, setStyle] = useState('contemporary_art');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isDemo, setIsDemo] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  const buildCompletePrompt = () => {
-    const styleText = styleOptions.find(s => s.id === selectedStyle)?.name || '';
-    const moodText = moodOptions.find(m => m.id === selectedMood)?.name || '';
-    const lightingText = lightingOptions.find(l => l.id === selectedLighting)?.name || '';
-    
-    let completePrompt = prompt;
-    
-    if (moodText) {
-      completePrompt += `\n氛围: ${moodText}`;
-    }
-    
-    if (lightingText) {
-      completePrompt += `\n光线: ${lightingText}`;
-    }
-    
-    if (additionalDetails) {
-      completePrompt += `\n额外细节: ${additionalDetails}`;
-    }
-    
-    return completePrompt;
-  };
+  const [result, setResult] = useState(null);
+  const [tab, setTab] = useState('input'); // input 或 result
 
   const handleGenerate = async () => {
-    if (!prompt || prompt.trim().length < 3) {
-      toast.error('请输入至少3个字符的提示词');
+    if (!prompt.trim()) {
+      toast.error('请输入创作提示词');
       return;
     }
 
-    setIsGenerating(true);
-    setErrorMessage('');
-    
     try {
-      const completePrompt = buildCompletePrompt();
+      setIsGenerating(true);
+      setTab('result');
       
-      try {
-        const response = await axios.post('/api/art-generation/generate', {
-          prompt: completePrompt,
-          style: selectedStyle,
-          ratio: ratioOptions.find(r => r.id === selectedRatio).value,
-        });
-        
-        setGeneratedUrl(response.data.imageUrl);
-        toast.success('艺术卡片生成成功！');
-        setIsDemo(false);
-      } catch (apiError) {
-        console.error('API调用失败，启用演示模式:', apiError);
-        // 启用演示模式，使用示例图片
-        const demoImages = {
-          'watercolor': '/img/AI生成艺术卡片展示.png',
-          'oil-painting': '/img/AI图片展示.png', 
-          'cartoon': '/img/展示图片.png',
-          'anime': '/img/展示图片1.png',
-          'pixel-art': '/img/展示.png'
-        };
-        
-        setGeneratedUrl(demoImages[selectedStyle] || '/img/AI生成艺术卡片展示.png');
-        setIsDemo(true);
-        toast.success('演示模式：显示示例图片');
+      const response = await fetch('/api/art-generation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt, style }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || '生成失败');
       }
+
+      setResult(data);
+      toast.success('艺术卡片生成成功!');
     } catch (error) {
-      console.error('艺术卡片生成失败:', error);
-      setErrorMessage('艺术卡片生成失败，请稍后再试或联系客服');
-      toast.error(error.response?.data?.message || '生成失败，请稍后再试');
+      console.error('生成失败:', error);
+      toast.error(error.message || '生成艺术卡片失败');
+      setTab('input');
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const handleDownload = () => {
-    if (generatedUrl) {
-      const link = document.createElement('a');
-      link.href = generatedUrl;
-      link.download = `art-${selectedStyle}-${Date.now()}.jpg`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  };
-
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">AI艺术卡片生成</h1>
-        <p className="mt-2 text-gray-600">使用Claude 3.7 Sonnet AI创建精美的艺术卡片，只需输入您想要的内容即可。</p>
-        {isDemo && (
-          <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-yellow-700 text-sm">当前为演示模式，实际生成功能需要正确配置API密钥。</p>
-          </div>
-        )}
-        {errorMessage && (
-          <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-700 text-sm">{errorMessage}</p>
-          </div>
-        )}
+    <div className="container mx-auto px-4 py-8">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-gradient mb-2">AI艺术卡片生成</h1>
+        <p className="text-gray-600 dark:text-gray-300">
+          输入您的创意提示词，选择风格，创建精美的艺术卡片
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-1 space-y-6">
-          <div className="bg-white rounded-lg shadow-md p-6 border border-gray-100">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800">创作设置</h2>
-            
-            <div className="space-y-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+        <div className="flex border-b border-gray-200 dark:border-gray-700">
+          <button
+            className={`px-6 py-3 text-sm font-medium ${
+              tab === 'input'
+                ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+            }`}
+            onClick={() => setTab('input')}
+          >
+            创作输入
+          </button>
+          <button
+            className={`px-6 py-3 text-sm font-medium ${
+              tab === 'result'
+                ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+            }`}
+            onClick={() => setTab('result')}
+            disabled={!result}
+          >
+            生成结果
+          </button>
+        </div>
+
+        <div className="p-6">
+          {tab === 'input' ? (
+            <div className="space-y-6">
               <div>
-                <label htmlFor="prompt" className="block text-sm font-medium text-gray-700">
-                  主要内容描述
+                <label htmlFor="style" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  选择设计风格
                 </label>
-                <div className="mt-1">
-                  <textarea
-                    id="prompt"
-                    name="prompt"
-                    rows={4}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    placeholder="描述您想要生成的图像，例如：一只猫坐在窗台上看日落"
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                  />
-                </div>
-                <p className="mt-1 text-xs text-gray-500">详细的描述会得到更好的结果</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">艺术风格</label>
-                <div className="mt-2 space-y-3">
-                  {styleOptions.map((style) => (
-                    <div key={style.id} className="flex items-start">
-                      <input
-                        id={style.id}
-                        name="art-style"
-                        type="radio"
-                        className="h-4 w-4 mt-1 text-blue-600 border-gray-300 focus:ring-blue-500"
-                        checked={selectedStyle === style.id}
-                        onChange={() => setSelectedStyle(style.id)}
-                      />
-                      <label htmlFor={style.id} className="ml-3 block text-sm">
-                        <span className="font-medium text-gray-900">{style.name}</span>
-                        <span className="text-gray-500 block">{style.description}</span>
-                      </label>
-                    </div>
+                <select
+                  id="style"
+                  value={style}
+                  onChange={(e) => setStyle(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:outline-none"
+                >
+                  {designStyles.map((designStyle) => (
+                    <option key={designStyle.id} value={designStyle.id}>
+                      {designStyle.name}
+                    </option>
                   ))}
-                </div>
+                </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">氛围</label>
-                <div className="mt-2 space-y-2">
-                  <select
-                    id="mood"
-                    name="mood"
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    value={selectedMood}
-                    onChange={(e) => setSelectedMood(e.target.value)}
-                  >
-                    {moodOptions.map((mood) => (
-                      <option key={mood.id} value={mood.id}>
-                        {mood.name} - {mood.description}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">光线</label>
-                <div className="mt-2 space-y-2">
-                  <select
-                    id="lighting"
-                    name="lighting"
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    value={selectedLighting}
-                    onChange={(e) => setSelectedLighting(e.target.value)}
-                  >
-                    {lightingOptions.map((lighting) => (
-                      <option key={lighting.id} value={lighting.id}>
-                        {lighting.name} - {lighting.description}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="additionalDetails" className="block text-sm font-medium text-gray-700">
-                  额外细节（可选）
+                <label htmlFor="prompt" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  创作提示词
                 </label>
-                <div className="mt-1">
-                  <textarea
-                    id="additionalDetails"
-                    name="additionalDetails"
-                    rows={3}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    placeholder="添加更多细节，如颜色偏好、物体特征等"
-                    value={additionalDetails}
-                    onChange={(e) => setAdditionalDetails(e.target.value)}
-                  />
-                </div>
+                <textarea
+                  id="prompt"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="描述您想要创建的艺术卡片内容，例如：春日花园下午茶指南，介绍5种最适合春季的花茶及其搭配点心..."
+                  rows={6}
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:outline-none"
+                ></textarea>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">比例</label>
-                <div className="mt-2 grid grid-cols-3 gap-2">
-                  {ratioOptions.map((ratio) => (
-                    <div
-                      key={ratio.id}
-                      className={`
-                        flex items-center justify-center py-2 px-3 rounded-md border cursor-pointer text-sm
-                        ${selectedRatio === ratio.id 
-                          ? 'bg-blue-100 border-blue-600 text-blue-700 font-medium' 
-                          : 'border-gray-300 text-gray-700 hover:bg-gray-50'}
-                      `}
-                      onClick={() => setSelectedRatio(ratio.id)}
-                    >
-                      {ratio.name}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6">
               <button
-                type="button"
                 onClick={handleGenerate}
                 disabled={isGenerating || !prompt.trim()}
-                className="w-full inline-flex justify-center items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                className={`w-full rounded-lg px-4 py-2.5 text-center text-sm font-semibold text-white 
+                ${
+                  isGenerating || !prompt.trim()
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'
+                }`}
               >
-                {isGenerating ? (
-                  <>
-                    <ArrowPathIcon className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" />
-                    生成中...
-                  </>
-                ) : (
-                  <>
-                    <SparklesIcon className="-ml-1 mr-2 h-5 w-5 text-white" />
-                    生成艺术卡片
-                  </>
-                )}
+                {isGenerating ? '生成中...' : '生成艺术卡片'}
               </button>
             </div>
-          </div>
-
-          {generatedUrl && (
-            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-100">
-              <h2 className="text-xl font-semibold mb-4 text-gray-800">保存作品</h2>
-              <button
-                type="button"
-                onClick={handleDownload}
-                className="w-full inline-flex justify-center items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
-              >
-                下载图片
-              </button>
+          ) : (
+            <div className="result-container">
+              {isGenerating ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="w-16 h-16 border-t-4 border-blue-500 border-solid rounded-full animate-spin"></div>
+                  <p className="mt-4 text-gray-600 dark:text-gray-300">正在创作您的艺术卡片...</p>
+                </div>
+              ) : result ? (
+                <div className="flex flex-col items-center">
+                  <div className="mx-auto w-[400px] max-h-[960px] overflow-auto mb-4">
+                    <iframe
+                      srcDoc={result.htmlContent}
+                      className="w-full h-[960px] border-0 rounded-lg shadow-md"
+                      title="Generated Art Card"
+                    ></iframe>
+                  </div>
+                  <div className="flex gap-4 mt-4">
+                    <a
+                      href={result.imageUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                    >
+                      <span className="mr-2">在新窗口打开</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path fillRule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/>
+                        <path fillRule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/>
+                      </svg>
+                    </a>
+                    <button
+                      onClick={() => {
+                        setPrompt('');
+                        setTab('input');
+                      }}
+                      className="inline-flex items-center px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg"
+                    >
+                      创建新的艺术卡片
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 dark:text-gray-400">请先生成艺术卡片</p>
+                </div>
+              )}
             </div>
           )}
         </div>
-
-        <div className="md:col-span-2">
-          <div className="bg-white rounded-lg shadow-md p-6 border border-gray-100 h-full flex flex-col">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800">生成结果</h2>
-            
-            {isGenerating ? (
-              <div className="flex-1 flex flex-col items-center justify-center p-12">
-                <ArrowPathIcon className="animate-spin h-12 w-12 text-blue-500 mb-4" />
-                <p className="text-gray-500 text-center">
-                  AI正在创作您的艺术卡片，请稍候...
-                  <br />
-                  <span className="text-sm">这可能需要10-30秒</span>
-                </p>
-              </div>
-            ) : generatedUrl ? (
-              <div className="flex-1 flex items-center justify-center p-4">
-                <div className="relative max-w-full max-h-full">
-                  <Image
-                    src={generatedUrl}
-                    alt="生成的艺术卡片"
-                    width={600}
-                    height={600}
-                    className="object-contain rounded-lg shadow-lg"
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center p-12 border-2 border-dashed border-gray-200 rounded-lg">
-                <SparklesIcon className="h-16 w-16 text-gray-200 mb-4" />
-                <p className="text-gray-400 text-center">
-                  填写左侧表单并点击"生成艺术卡片"按钮
-                  <br />
-                  <span className="text-sm">生成的图片将显示在这里</span>
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
 
-      <div className="mt-8 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-100">
-        <h2 className="text-lg font-medium text-blue-800 mb-2">提示技巧</h2>
-        <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
-          <li>使用具体详细的描述会获得更好的结果</li>
-          <li>尝试指定场景、背景、光线、氛围等元素</li>
-          <li>如果结果不理想，尝试调整描述或选择不同的艺术风格</li>
-          <li>避免生成不适当内容，系统会自动过滤违规请求</li>
+      <div className="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">使用提示</h2>
+        <ul className="list-disc pl-5 space-y-2 text-gray-600 dark:text-gray-300">
+          <li>提供详细而具体的描述，例如主题、情感、色彩偏好等</li>
+          <li>尝试不同的设计风格，每种风格会带来截然不同的视觉效果</li>
+          <li>生成的艺术卡片可用于社交媒体内容、文章插图、个人收藏等</li>
+          <li>输入内容越具体，生成的效果就越符合您的预期</li>
         </ul>
       </div>
     </div>
