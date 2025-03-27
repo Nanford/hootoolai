@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { SparklesIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 
-// 创建一个包含useSearchParams的组件
+// 使用搜索参数的组件，被Suspense包裹
 function ResetPasswordForm() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -167,7 +167,10 @@ function ResetPasswordForm() {
   );
 }
 
-// 主页面组件使用Suspense包裹表单组件
+// 添加关键导出，跳过预渲染
+export const dynamic = "force-dynamic";
+
+// 主组件
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
@@ -178,4 +181,4 @@ export default function ResetPasswordPage() {
       <ResetPasswordForm />
     </Suspense>
   );
-} 
+}
