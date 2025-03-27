@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { SparklesIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 
-export default function ResetPasswordPage() {
+// 创建一个包含useSearchParams的组件
+function ResetPasswordForm() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [token, setToken] = useState('');
@@ -163,5 +164,18 @@ export default function ResetPasswordPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// 主页面组件使用Suspense包裹表单组件
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="w-16 h-16 border-t-4 border-blue-500 border-solid rounded-full animate-spin"></div>
+      </div>
+    }>
+      <ResetPasswordForm />
+    </Suspense>
   );
 } 
