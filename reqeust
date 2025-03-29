@@ -1,0 +1,37 @@
+你是一名谷歌精通HTML&TAIlwind语法、next.js和python后端技术代码的十年全栈工程师，现在我需要拟帮忙设计一个网站。
+
+AI工具站项目完整功能方案
+一、项目简介
+搭建一个整合AI能力的Web工具平台，包含图片处理（OpenAI API）、艺术卡片生成（Anthropic API）、公众号小红书封面生成（Anthropic API）、聊天机器人(deepseek api)等功能，支持限额免费和付费模式，通过邮箱验证注册登录
+
+二、功能架构设计
+
+1. 前端页面结构
+  主页(Home Page) 基于 /fetch{https://chatwise.app/}风格开发主页，页设计 (/) Hero区域: 展示平台价值主张和主要功能、号召性按钮: 引导注册和登录
+  产品功能介绍（图片、艺术卡片、小红书封面、聊天机器人）
+  注册/登录入口
+  用户使用案例与宣传展示
+注册登录页(Login/Signup Page)
+  邮箱注册验证
+  密码重置功能
+  登录后进入主页
+工具栏页(Dashboard)
+  图片处理工具
+  艺术卡片生成工具
+  公众号、小红书封面生成工具
+  聊天机器人功能
+后端服务结构
+
+API网关：OpenAI、Anthropic、deepseek
+用户认证与管理：Firebase Authentication 或 Auth0
+数据存储：轻量级数据库，如Supabase或Firebase
+登录/注册系统 (/auth)
+    使用Supabase内置邮箱认证
+    Magic Link登录（无需密码管理）
+    简化注册流程（减少用户流失）
+计费系统：Stripe或Paddle实现付费订阅
+后端运行环境：使用Vercel或Cloudflare Pages进行托管
+用户账户管理（限额监控、充值功能）
+
+邮箱是：support@hootoolai.com
+
