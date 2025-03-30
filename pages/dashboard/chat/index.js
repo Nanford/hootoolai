@@ -38,6 +38,7 @@ export default function Chat() {
   const router = useRouter();
   const [showSendSettings, setShowSendSettings] = useState(false);
   const [enterToSend, setEnterToSend] = useState(true);
+  const [useMockData, setUseMockData] = useState(false);
 
   useEffect(() => {
     // 检查用户是否已登录
@@ -72,34 +73,129 @@ export default function Chat() {
     }
   }, [provider, availableModels]);
 
-  // 模拟加载聊天历史
-  const loadChatHistory = () => {
-    // 这里应该从数据库加载，现在用模拟数据
+  // 加载聊天历史
+  const loadChatHistory = async () => {
+    try {
+      setLoading(true);
+      
+      // 确保user不为null
+      if (!user || !user.id) {
+        console.log('用户未登录或user.id不存在，创建新聊天');
+        setUseMockData(true);
+        createNewChat();
+        setLoading(false);
+        return;
+      }
+      
+      // 尝试从Supabase加载用户的聊天历史
+      try {
+        const { data, error } = await supabase
+          .from('chat_history')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('updated_at', { ascending: false });
+        
+        if (error) {
+          console.error('加载聊天历史时出错:', error);
+          
+          // 如果是404错误，表示表不存在，切换到模拟数据模式
+          if (error.code === '404' || error.message?.includes('does not exist')) {
+            console.log('chat_history表不存在，使用本地存储模式');
+            setUseMockData(true);
+            loadMockChatHistory();
+            return;
+          }
+          
+          // 其他错误，创建一个新聊天
+          createNewChat();
+          return;
+        }
+        
+        // 处理返回的数据
+        if (data && data.length > 0) {
+          const formattedHistory = data.map(chat => ({
+            id: chat.id,
+            title: chat.title || '新的对话',
+            lastMessage: chat.last_message || '',
+            date: chat.updated_at ? new Date(chat.updated_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            messages: chat.messages || []
+          }));
+          
+          setChatHistory(formattedHistory);
+          
+          // 选择最近的一个聊天
+          setCurrentChatId(formattedHistory[0].id);
+          setMessages(formattedHistory[0].messages.length > 0 
+            ? formattedHistory[0].messages 
+            : [{
+                id: 1,
+                role: 'assistant',
+                content: '你好！我是HooTool AI助手，有什么可以帮到你的吗？',
+                timestamp: new Date(),
+                model: selectedModel,
+                provider: provider
+              }]
+          );
+        } else {
+          // 没有历史记录，创建新聊天
+          createNewChat();
+        }
+      } catch (apiError) {
+        console.error('API调用出错:', apiError);
+        setUseMockData(true);
+        loadMockChatHistory();
+      }
+    } catch (error) {
+      console.error('处理聊天历史时出错:', error);
+      // 出错时创建新聊天
+      setUseMockData(true);
+      createNewChat();
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // 加载模拟聊天历史数据
+  const loadMockChatHistory = () => {
+    console.log('加载模拟聊天历史数据');
+    
+    // 从localStorage尝试加载历史数据
+    try {
+      const savedHistory = localStorage.getItem('chatHistory');
+      if (savedHistory) {
+        const parsedHistory = JSON.parse(savedHistory);
+        setChatHistory(parsedHistory);
+        
+        if (parsedHistory.length > 0) {
+          setCurrentChatId(parsedHistory[0].id);
+          const firstChat = parsedHistory[0];
+          setMessages(firstChat.messages && firstChat.messages.length > 0 
+            ? firstChat.messages 
+            : [{
+                id: 1,
+                role: 'assistant',
+                content: '你好！我是HooTool AI助手，有什么可以帮到你的吗？',
+                timestamp: new Date(),
+                model: selectedModel,
+                provider: provider
+              }]
+          );
+          return;
+        }
+      }
+    } catch (e) {
+      console.error('从localStorage加载聊天历史失败:', e);
+    }
+    
+    // 如果没有保存的历史或解析失败，创建模拟数据
     const mockHistory = [
-      { id: 'chat-1', title: '工作效率提升策略', lastMessage: '谢谢你的建议，我会尝试这些方法', date: '2025-03-20', messages: [] },
-      { id: 'chat-2', title: '写作技巧指导', lastMessage: '这些写作技巧非常有用，感谢分享', date: '2025-03-19', messages: [] },
-      { id: 'chat-3', title: '营销策略分析', lastMessage: '我明白了，这些策略对目标受众很有效', date: '2025-03-18', messages: [] },
-      { id: 'chat-4', title: 'AI技术发展趋势', lastMessage: '你对大模型的解释很清晰，谢谢', date: '2025-03-17', messages: [] },
+      { id: 'chat-1', title: '工作效率提升策略', lastMessage: '谢谢你的建议，我会尝试这些方法', date: new Date().toISOString().split('T')[0], messages: [] },
+      { id: 'chat-2', title: '写作技巧指导', lastMessage: '这些写作技巧非常有用，感谢分享', date: new Date().toISOString().split('T')[0], messages: [] },
+      { id: 'chat-3', title: 'AI技术发展趋势', lastMessage: '你对大模型的解释很清晰，谢谢', date: new Date().toISOString().split('T')[0], messages: [] },
     ];
     
     setChatHistory(mockHistory);
-    // 新用户，创建一个新的聊天
-    createNewChat();
-  };
-
-  // 创建新的聊天
-  const createNewChat = () => {
-    const newChatId = `chat-${Date.now()}`;
-    const newChat = {
-      id: newChatId,
-      title: '新的对话',
-      lastMessage: '',
-      date: new Date().toISOString().split('T')[0],
-      messages: []
-    };
-    
-    setChatHistory(prev => [newChat, ...prev]);
-    setCurrentChatId(newChatId);
+    setCurrentChatId(mockHistory[0].id);
     setMessages([{
       id: 1,
       role: 'assistant',
@@ -108,25 +204,157 @@ export default function Chat() {
       model: selectedModel,
       provider: provider
     }]);
+    
+    // 保存到localStorage
+    localStorage.setItem('chatHistory', JSON.stringify(mockHistory));
   };
 
-  // 选择一个聊天
-  const selectChat = (chatId) => {
-    setCurrentChatId(chatId);
-    // 这里应该从数据库加载聊天内容，现在用模拟数据
-    const chat = chatHistory.find(c => c.id === chatId);
-    if (chat.messages && chat.messages.length > 0) {
-      setMessages(chat.messages);
-    } else {
-      setMessages([{
+  // 创建新的聊天
+  const createNewChat = async () => {
+    try {
+      const now = new Date().toISOString();
+      const newChatId = `chat-${Date.now()}`;
+      
+      // 创建初始消息
+      const initialMessage = {
         id: 1,
         role: 'assistant',
         content: '你好！我是HooTool AI助手，有什么可以帮到你的吗？',
-        timestamp: new Date(),
+        timestamp: now,
         model: selectedModel,
         provider: provider
-      }]);
+      };
+      
+      // 在本地状态添加新聊天
+      const newChat = {
+        id: newChatId,
+        title: '新的对话',
+        lastMessage: '',
+        date: now.split('T')[0],
+        messages: [initialMessage]
+      };
+      
+      // 如果使用真实数据库且用户已登录，尝试在数据库中创建
+      if (!useMockData && user && user.id) {
+        try {
+          const { data, error } = await supabase
+            .from('chat_history')
+            .insert({
+              id: newChatId,
+              user_id: user.id,
+              title: '新的对话',
+              last_message: '',
+              messages: [initialMessage],
+              created_at: now,
+              updated_at: now
+            })
+            .select();
+          
+          if (error) {
+            console.error('创建新聊天时出错:', error);
+            // 如果是404错误，表示表不存在，切换到模拟数据模式
+            if (error.code === '404' || error.message?.includes('does not exist')) {
+              setUseMockData(true);
+            }
+          }
+        } catch (dbError) {
+          console.error('数据库操作出错:', dbError);
+          setUseMockData(true);
+        }
+      }
+      
+      // 更新本地状态
+      setChatHistory(prev => [newChat, ...prev]);
+      setCurrentChatId(newChatId);
+      setMessages([initialMessage]);
+      
+      // 如果是模拟模式，保存到localStorage
+      if (useMockData) {
+        const updatedHistory = [newChat, ...chatHistory];
+        localStorage.setItem('chatHistory', JSON.stringify(updatedHistory));
+      }
+    } catch (error) {
+      console.error('创建新聊天时出错:', error);
+      // 即使出错，也确保UI可用
+      const fallbackChat = {
+        id: `fallback-${Date.now()}`,
+        title: '新的对话',
+        lastMessage: '',
+        date: new Date().toISOString().split('T')[0],
+        messages: [{
+          id: 1,
+          role: 'assistant',
+          content: '你好！我是HooTool AI助手，有什么可以帮到你的吗？',
+          timestamp: new Date(),
+          model: selectedModel,
+          provider: provider
+        }]
+      };
+      
+      setChatHistory(prev => [fallbackChat, ...prev]);
+      setCurrentChatId(fallbackChat.id);
+      setMessages([fallbackChat.messages[0]]);
+      
+      // 模拟模式下保存到localStorage
+      if (useMockData) {
+        const updatedHistory = [fallbackChat, ...chatHistory];
+        localStorage.setItem('chatHistory', JSON.stringify(updatedHistory));
+      }
     }
+  };
+
+  // 选择一个聊天
+  const selectChat = async (chatId) => {
+    setCurrentChatId(chatId);
+    
+    // 从状态中查找聊天
+    const chat = chatHistory.find(c => c.id === chatId);
+    
+    if (chat) {
+      if (chat.messages && chat.messages.length > 0) {
+        setMessages(chat.messages);
+      } else {
+        // 如果没有消息，则添加初始消息
+        const initialMessage = {
+          id: 1,
+          role: 'assistant',
+          content: '你好！我是HooTool AI助手，有什么可以帮到你的吗？',
+          timestamp: new Date(),
+          model: selectedModel,
+          provider: provider
+        };
+        
+        setMessages([initialMessage]);
+        
+        // 更新本地状态中的聊天
+        const updatedChat = { ...chat, messages: [initialMessage] };
+        const updatedChatHistory = chatHistory.map(c => 
+          c.id === chatId ? updatedChat : c
+        );
+        setChatHistory(updatedChatHistory);
+        
+        // 如果不是模拟模式且用户已登录，更新数据库中的记录
+        if (!useMockData && user && user.id) {
+          try {
+            await supabase
+              .from('chat_history')
+              .update({ 
+                messages: [initialMessage],
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', chatId);
+          } catch (dbError) {
+            console.error('更新数据库时出错:', dbError);
+          }
+        }
+        
+        // 如果是模拟模式，保存到localStorage
+        if (useMockData) {
+          localStorage.setItem('chatHistory', JSON.stringify(updatedChatHistory));
+        }
+      }
+    }
+    
     setShowChatOptions(false);
   };
 
@@ -137,19 +365,52 @@ export default function Chat() {
       const chatMessages = [...messages, { role: 'user', content: userMessage }];
       const title = await generateChatTitle(chatMessages);
       
+      // 更新本地状态
       setChatHistory(prev => prev.map(chat => 
         chat.id === chatId ? { ...chat, title, lastMessage: userMessage } : chat
       ));
       
-      // 在实际应用中，此处应将更新保存到数据库
+      // 更新数据库中的记录
+      if (!useMockData && user && user.id) {
+        try {
+          await supabase
+            .from('chat_history')
+            .update({ 
+              title,
+              last_message: userMessage,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', chatId);
+        } catch (dbError) {
+          console.error('更新标题到数据库时出错:', dbError);
+        }
+      }
     } catch (error) {
       console.error('更新标题时出错:', error);
       // 回退到简单标题生成
       if (userMessage.length > 20) {
         const shortTitle = userMessage.substring(0, 20) + '...';
+        
+        // 更新本地状态
         setChatHistory(prev => prev.map(chat => 
           chat.id === chatId ? { ...chat, title: shortTitle, lastMessage: userMessage } : chat
         ));
+        
+        // 更新数据库中的记录
+        if (!useMockData && user && user.id) {
+          try {
+            await supabase
+              .from('chat_history')
+              .update({ 
+                title: shortTitle,
+                last_message: userMessage,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', chatId);
+          } catch (dbError) {
+            console.error('更新标题到数据库时出错:', dbError);
+          }
+        }
       }
     }
   };
@@ -173,14 +434,41 @@ export default function Chat() {
     
     // 更新聊天历史中的最后一条消息
     if (currentChatId) {
-      setChatHistory(prev => prev.map(chat => 
+      // 更新本地状态
+      const updatedChatHistory = chatHistory.map(chat => 
         chat.id === currentChatId ? { ...chat, lastMessage: input.trim() } : chat
-      ));
+      );
+      setChatHistory(updatedChatHistory);
       
       // 如果是新聊天的第一条消息，更新标题
       const currentChat = chatHistory.find(c => c.id === currentChatId);
       if (currentChat && currentChat.title === '新的对话') {
         updateChatTitle(currentChatId, input.trim());
+      } else {
+        // 如果是模拟模式，保存到localStorage
+        if (useMockData) {
+          localStorage.setItem('chatHistory', JSON.stringify(updatedChatHistory));
+        }
+      }
+      
+      // 如果不是模拟模式且用户已登录，尝试更新数据库
+      if (!useMockData && user && user.id) {
+        try {
+          // 更新数据库中的记录
+          const updatedMessages = [...messages, userMessage];
+          await supabase
+            .from('chat_history')
+            .update({ 
+              last_message: input.trim(),
+              messages: updatedMessages,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', currentChatId);
+        } catch (dbError) {
+          console.error('更新数据库时出错:', dbError);
+          // 遇到错误时切换到模拟模式
+          setUseMockData(true);
+        }
       }
     }
     
@@ -198,58 +486,144 @@ export default function Chat() {
           content: `你是HooTool AI的智能助手，基于${provider === 'deepseek' ? 'DeepSeek' : 'OpenAI'}技术。你的目标是提供有用、准确和有见解的回答。保持友好和专业的语气，尽量提供具体的建议和信息。如果你不确定，请坦诚地表示，而不是提供错误信息。你的回答将以Markdown格式显示，所以可以使用Markdown语法来格式化你的回答，例如标题、列表、代码块等。`
         },
         // 添加聊天历史记录，不包括系统消息
-        ...messages.filter(m => m.role !== 'system'),
-        // 添加最新的用户消息
-        userMessage
+        ...messages.map(msg => ({ role: msg.role, content: msg.content })),
+        // 添加当前用户消息
+        { role: 'user', content: input.trim() }
       ]);
       
-      // 使用通用API调用函数
-      const response = await callChatAPI(
+      // 设置API选项
+      const apiOptions = { stream: true };
+      
+      // 使用流式处理方式调用模型API
+      let finalContent = ''; // 用于存储完整的回复内容
+      
+      await callChatAPI(
         provider,
         selectedModel,
         chatMessages,
-        { temperature: 0.7, max_tokens: 2000, stream: true },
-        (content, thinkingProcess) => {
-          // 更新流式内容
+        apiOptions,
+        (content, thinking = '') => {
           setStreamingContent(content);
-          
-          // 如果有思考过程，显示它
-          if (thinkingProcess) {
-            setThinking(thinkingProcess);
+          finalContent = content; // 保存最新的内容
+          if (thinking) {
+            setThinking(thinking);
           }
-          
           // 保持滚动到底部
           scrollToBottom();
         }
       );
       
-      // 流式输出完成后，添加最终消息
-      const assistantMessage = { 
-        role: 'assistant', 
-        content: response.content, 
+      // 流式响应完成后，创建完整消息
+      const assistantMessage = {
+        id: Date.now(),
+        role: 'assistant',
+        content: finalContent, // 使用保存的完整内容
         timestamp: new Date(),
         model: selectedModel,
         provider: provider
       };
-      setMessages(prev => [...prev, assistantMessage]);
       
-      // 在实际应用中，此处应将对话保存到数据库
+      // 在流式输出完成后等待一小段时间再更新消息列表
+      // 这确保了在流式输出结束时正确显示完整消息
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // 更新消息列表
+      const updatedAllMessages = [...messages, userMessage, assistantMessage];
+      setMessages(updatedAllMessages);
+      
+      // 更新聊天历史
+      const updatedChatHistory = chatHistory.map(chat => {
+        if (chat.id === currentChatId) {
+          return {
+            ...chat, 
+            messages: updatedAllMessages,
+            lastMessage: input.trim()
+          };
+        }
+        return chat;
+      });
+      setChatHistory(updatedChatHistory);
+      
+      // 如果是模拟模式，保存到localStorage
+      if (useMockData) {
+        localStorage.setItem('chatHistory', JSON.stringify(updatedChatHistory));
+      }
+      
+      // 如果不是模拟模式且用户已登录，尝试更新数据库
+      if (!useMockData && user && user.id) {
+        try {
+          // 更新数据库中的记录
+          await supabase
+            .from('chat_history')
+            .update({ 
+              messages: updatedAllMessages,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', currentChatId);
+        } catch (dbError) {
+          console.error('更新消息到数据库时出错:', dbError);
+          // 遇到错误时切换到模拟模式
+          setUseMockData(true);
+        }
+      }
     } catch (error) {
-      console.error('聊天错误:', error);
+      console.error('发送消息时出错:', error);
       
       // 添加错误消息
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: '抱歉，我遇到了一些问题。请稍后再试。', 
-        timestamp: new Date(),
-        isError: true 
-      }]);
+      const errorMessage = {
+        id: Date.now(),
+        role: 'assistant',
+        content: `很抱歉，发生了错误: ${error.message}。请稍后再试或联系支持团队。`,
+        isError: true,
+        timestamp: new Date()
+      };
+      
+      // 更新消息列表
+      const updatedAllMessages = [...messages, userMessage, errorMessage];
+      setMessages(updatedAllMessages);
+      
+      // 更新聊天历史
+      const updatedChatHistory = chatHistory.map(chat => {
+        if (chat.id === currentChatId) {
+          return {
+            ...chat, 
+            messages: updatedAllMessages,
+            lastMessage: input.trim()
+          };
+        }
+        return chat;
+      });
+      setChatHistory(updatedChatHistory);
+      
+      // 如果是模拟模式，保存到localStorage
+      if (useMockData) {
+        localStorage.setItem('chatHistory', JSON.stringify(updatedChatHistory));
+      }
+      
+      // 如果不是模拟模式且用户已登录，尝试更新数据库
+      if (!useMockData && user && user.id) {
+        try {
+          // 更新数据库中的记录
+          await supabase
+            .from('chat_history')
+            .update({ 
+              messages: updatedAllMessages,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', currentChatId);
+        } catch (dbError) {
+          console.error('更新错误消息到数据库时出错:', dbError);
+          // 遇到错误时切换到模拟模式
+          setUseMockData(true);
+        }
+      }
     } finally {
       setSending(false);
-      setStreamingContent('');
-      setThinking('');
-      // 聚焦输入框
-      inputRef.current?.focus();
+      // 保留streamingContent的内容，直到新内容完全加载到消息列表中
+      // setTimeout(() => {
+      //   setStreamingContent('');
+      //   setThinking('');
+      // }, 500);
     }
   };
 
@@ -292,17 +666,51 @@ export default function Chat() {
   };
 
   // 删除当前聊天
-  const deleteCurrentChat = () => {
-    setChatHistory(prev => prev.filter(chat => chat.id !== currentChatId));
-    if (chatHistory.length > 1) {
-      const nextChat = chatHistory.find(chat => chat.id !== currentChatId);
-      if (nextChat) {
-        selectChat(nextChat.id);
+  const deleteCurrentChat = async () => {
+    // 确保有选中的聊天
+    if (!currentChatId) return;
+    
+    try {
+      // 从本地状态中移除
+      const newChatHistory = chatHistory.filter(chat => chat.id !== currentChatId);
+      setChatHistory(newChatHistory);
+      
+      // 如果是模拟模式，更新localStorage
+      if (useMockData) {
+        localStorage.setItem('chatHistory', JSON.stringify(newChatHistory));
       }
-    } else {
+      
+      // 如果不是模拟模式且用户已登录，从数据库中删除
+      if (!useMockData && user && user.id) {
+        try {
+          const { error } = await supabase
+            .from('chat_history')
+            .delete()
+            .eq('id', currentChatId);
+          
+          if (error) {
+            console.error('删除聊天时出错:', error);
+            // 如果出错，切换到模拟模式
+            setUseMockData(true);
+          }
+        } catch (dbError) {
+          console.error('删除聊天数据库操作出错:', dbError);
+          setUseMockData(true);
+        }
+      }
+      
+      // 如果还有其他聊天，选择第一个
+      if (newChatHistory.length > 0) {
+        selectChat(newChatHistory[0].id);
+      } else {
+        // 如果没有其他聊天，创建一个新的
+        createNewChat();
+      }
+    } catch (error) {
+      console.error('删除聊天时出错:', error);
+      // 出错时强制创建新聊天
       createNewChat();
     }
-    setShowChatOptions(false);
   };
 
   // 保存当前聊天
@@ -710,14 +1118,6 @@ export default function Chat() {
             </div>
             
             <div className="relative flex items-center space-x-2">
-              <button 
-                onClick={() => setShowHelpPanel(!showHelpPanel)}
-                className="text-gray-500 hover:text-green-600 p-2 rounded-full hover:bg-green-50"
-                aria-label="帮助"
-              >
-                <FaInfoCircle className="h-5 w-5" />
-              </button>
-              
               <button 
                 onClick={() => setShowSidebar(!showSidebar)}
                 className="text-gray-500 hover:text-green-600 p-2 rounded-full hover:bg-green-50 md:hidden"

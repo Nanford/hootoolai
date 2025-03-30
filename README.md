@@ -60,6 +60,35 @@ NEXT_PUBLIC_DEEPSEEK_API_KEY=your-deepseek-api-key
 NEXT_PUBLIC_OPENAI_API_KEY=your-openai-api-key
 ```
 
+### 数据库设置
+
+在Supabase中创建以下表结构：
+
+```sql
+-- 创建chat_history表用于存储用户聊天历史
+CREATE TABLE IF NOT EXISTS chat_history (
+  id TEXT PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL DEFAULT '新的对话',
+  last_message TEXT,
+  messages JSONB NOT NULL DEFAULT '[]'::jsonb,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+-- 创建索引用于加速按用户查询
+CREATE INDEX IF NOT EXISTS chat_history_user_id_idx ON chat_history(user_id);
+
+-- 启用行级安全策略
+ALTER TABLE chat_history ENABLE ROW LEVEL SECURITY;
+
+-- 应用行级安全策略
+CREATE POLICY chat_history_select_policy ON chat_history 
+  FOR SELECT USING (auth.uid() = user_id);
+```
+
+也可以运行`supabase/migrations/create_chat_history_table.sql`脚本创建表结构。
+
 ### 开发环境
 
 ```bash
@@ -104,6 +133,7 @@ hootoolai/
 - 支持Markdown格式输出
 - 实时响应和流式输出
 - 对话历史管理（创建、切换、删除）
+- 持久化存储聊天记录，登录后可访问历史对话
 - 模型切换功能
 - 自定义消息发送设置
 
