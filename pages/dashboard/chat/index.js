@@ -9,6 +9,11 @@ import {
   FaChevronRight, FaChevronDown, FaRegFile, FaMagic
 } from 'react-icons/fa';
 import { supabase } from '../../../utils/supabase';
+import { callDeepseekChat, formatChatMessages, generateChatTitle, streamDeepseekChat } from '../../../utils/api';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
+import remarkGfm from 'remark-gfm';
 
 export default function Chat() {
   const [user, setUser] = useState(null);
@@ -21,6 +26,8 @@ export default function Chat() {
   const [currentChatId, setCurrentChatId] = useState(null);
   const [showChatOptions, setShowChatOptions] = useState(false);
   const [showHelpPanel, setShowHelpPanel] = useState(false);
+  const [streamingContent, setStreamingContent] = useState('');
+  const [thinking, setThinking] = useState('');
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const router = useRouter();
@@ -100,13 +107,26 @@ export default function Chat() {
   };
 
   // 根据最新消息更新聊天标题
-  const updateChatTitle = (chatId, userMessage) => {
-    // 实际应用中应该使用AI生成标题，这里简化处理
-    if (userMessage.length > 20) {
-      const shortTitle = userMessage.substring(0, 20) + '...';
+  const updateChatTitle = async (chatId, userMessage) => {
+    try {
+      // 使用API生成标题
+      const chatMessages = [...messages, { role: 'user', content: userMessage }];
+      const title = await generateChatTitle(chatMessages);
+      
       setChatHistory(prev => prev.map(chat => 
-        chat.id === chatId ? { ...chat, title: shortTitle, lastMessage: userMessage } : chat
+        chat.id === chatId ? { ...chat, title, lastMessage: userMessage } : chat
       ));
+      
+      // 在实际应用中，此处应将更新保存到数据库
+    } catch (error) {
+      console.error('更新标题时出错:', error);
+      // 回退到简单标题生成
+      if (userMessage.length > 20) {
+        const shortTitle = userMessage.substring(0, 20) + '...';
+        setChatHistory(prev => prev.map(chat => 
+          chat.id === chatId ? { ...chat, title: shortTitle, lastMessage: userMessage } : chat
+        ));
+      }
     }
   };
 
@@ -142,17 +162,50 @@ export default function Chat() {
     
     setInput('');
     setSending(true);
+    setStreamingContent('');
+    setThinking('');
     
     try {
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // 准备消息历史记录，格式化为DeepSeek API所需格式
+      const chatMessages = formatChatMessages([
+        // 系统提示，定义AI助手的行为
+        { 
+          role: 'system', 
+          content: '你是HooTool AI的智能助手，基于DeepSeek技术。你的目标是提供有用、准确和有见解的回答。保持友好和专业的语气，尽量提供具体的建议和信息。如果你不确定，请坦诚地表示，而不是提供错误信息。你的回答将以Markdown格式显示，所以可以使用Markdown语法来格式化你的回答，例如标题、列表、代码块等。'
+        },
+        // 添加聊天历史记录，不包括系统消息
+        ...messages.filter(m => m.role !== 'system'),
+        // 添加最新的用户消息
+        userMessage
+      ]);
       
-      // 生成助手回复（在实际应用中会调用DeepSeek API）
-      const response = generateMockResponse(input.trim());
+      // 使用流式API
+      const response = await streamDeepseekChat(
+        chatMessages,
+        { temperature: 0.7, max_tokens: 2000 },
+        (content, thinkingProcess) => {
+          // 更新流式内容
+          setStreamingContent(content);
+          
+          // 如果有思考过程，显示它
+          if (thinkingProcess) {
+            setThinking(thinkingProcess);
+          }
+          
+          // 保持滚动到底部
+          scrollToBottom();
+        }
+      );
       
-      // 添加助手消息
-      const assistantMessage = { role: 'assistant', content: response, timestamp: new Date() };
+      // 流式输出完成后，添加最终消息
+      const assistantMessage = { 
+        role: 'assistant', 
+        content: response.content, 
+        timestamp: new Date() 
+      };
       setMessages(prev => [...prev, assistantMessage]);
+      
+      // 在实际应用中，此处应将对话保存到数据库
     } catch (error) {
       console.error('聊天错误:', error);
       
@@ -165,24 +218,11 @@ export default function Chat() {
       }]);
     } finally {
       setSending(false);
+      setStreamingContent('');
+      setThinking('');
       // 聚焦输入框
       inputRef.current?.focus();
     }
-  };
-
-  // 模拟响应生成，实际应用会替换为API调用
-  const generateMockResponse = (query) => {
-    const responses = [
-      '我理解您的问题。根据我的知识，这个问题有多个角度可以探讨...',
-      '这是一个很好的问题！让我为您分析一下...',
-      '根据最新的研究和数据，我可以告诉您...',
-      '这个问题很有趣。从技术角度来看...',
-      '我可以提供一些有用的建议。首先，考虑...'
-    ];
-    
-    // 返回随机响应 + 查询内容的回显
-    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-    return `${randomResponse}\n\n关于"${query}"，我建议您可以考虑以下几点：\n1. 深入研究相关领域的基础知识\n2. 尝试实践并记录结果\n3. 与专业人士交流获取反馈`;
   };
 
   // 建议提示
@@ -241,6 +281,24 @@ export default function Chat() {
   const saveCurrentChat = () => {
     alert('聊天已保存到您的收藏夹');
     setShowChatOptions(false);
+  };
+
+  // 渲染消息内容（支持Markdown）
+  const renderMessageContent = (content, isError = false) => {
+    if (isError) {
+      return <div className="text-red-500">{content}</div>;
+    }
+    
+    return (
+      <div className="prose prose-sm max-w-none">
+        <ReactMarkdown 
+          rehypePlugins={[rehypeRaw, rehypeSanitize]}
+          remarkPlugins={[remarkGfm]}
+        >
+          {content}
+        </ReactMarkdown>
+      </div>
+    );
   };
 
   if (loading) {
@@ -527,18 +585,15 @@ export default function Chat() {
                   key={index} 
                   className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div className={`
-                    flex max-w-md ${message.role === 'user' 
-                      ? 'bg-green-600 text-white' 
-                      : message.isError 
-                        ? 'bg-red-600 text-white' 
-                        : 'bg-white text-gray-700'
-                    } rounded-2xl px-4 py-3 shadow-sm ${message.role === 'user' ? 'rounded-tr-none' : 'rounded-tl-none'}
-                  `}>
+                  <div className={`flex max-w-md ${
+                    message.role === 'user' 
+                      ? 'bg-blue-600 text-white rounded-2xl px-4 py-3 shadow-sm rounded-tr-none' 
+                      : 'bg-white text-gray-700 rounded-2xl px-4 py-3 shadow-sm rounded-tl-none'
+                  }`}>
                     <div className="flex-shrink-0 mr-3 mt-1">
                       {message.role === 'user' ? (
-                        <div className="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center">
-                          <FaUser className="h-4 w-4 text-white" />
+                        <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
+                          <FaUser className="h-4 w-4" />
                         </div>
                       ) : (
                         <div className="h-8 w-8 rounded-full bg-white border border-green-200 flex items-center justify-center">
@@ -546,11 +601,17 @@ export default function Chat() {
                         </div>
                       )}
                     </div>
-                    <div className="flex-1">
-                      <div className="whitespace-pre-wrap text-sm">{message.content}</div>
-                      <div className={`text-xs mt-1 text-right ${message.role === 'user' ? 'text-green-200' : 'text-gray-400'}`}>
-                        {formatTime(message.timestamp)}
-                      </div>
+                    <div className={`flex-1 overflow-hidden ${message.role === 'user' ? 'text-white' : 'text-gray-700'}`}>
+                      {message.role === 'user' ? (
+                        <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                      ) : (
+                        renderMessageContent(message.content, message.isError)
+                      )}
+                      {message.timestamp && (
+                        <div className={`text-xs mt-2 ${message.role === 'user' ? 'text-blue-200' : 'text-gray-400'}`}>
+                          {formatTime(message.timestamp)}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -564,12 +625,28 @@ export default function Chat() {
                         <FaRobot className="h-4 w-4 text-green-600" />
                       </div>
                     </div>
-                    <div className="flex items-center">
-                      <div className="typing-indicator">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                      </div>
+                    <div className="flex-1 overflow-hidden">
+                      {!streamingContent && (
+                        <div className="flex items-center">
+                          <div className="typing-indicator">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {streamingContent && (
+                        <div>
+                          {renderMessageContent(streamingContent)}
+                          {thinking && (
+                            <div className="mt-2 p-2 bg-gray-50 rounded-md border border-gray-100 text-xs text-gray-500">
+                              <div className="font-semibold text-gray-600 mb-1">思考过程:</div>
+                              {thinking}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
