@@ -43,8 +43,14 @@ export default function Home() {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
-      router.push('/');
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('退出登录错误:', error.message);
+        return;
+      }
+      
+      setUser(null);
       setShowUserMenu(false);
     } catch (error) {
       console.error('退出登录错误:', error.message);
@@ -82,9 +88,9 @@ export default function Home() {
                 <a href="#features" className="border-transparent text-gray-600 hover:text-blue-600 hover:border-blue-600 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors">
                   功能
                 </a>
-                <a href="#pricing" className="border-transparent text-gray-600 hover:text-blue-600 hover:border-blue-600 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors">
+                <Link href="/pricing" className="border-transparent text-gray-600 hover:text-blue-600 hover:border-blue-600 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors">
                   价格
-                </a>
+                </Link>
                 <a href="#cases" className="border-transparent text-gray-600 hover:text-blue-600 hover:border-blue-600 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors">
                   使用案例
                 </a>
@@ -341,7 +347,7 @@ export default function Home() {
                   <span className="text-5xl font-bold text-gray-900">¥49</span>
                   <span className="text-gray-600 ml-2">/月</span>
                 </p>
-                <Link href="/auth/signup?plan=pro" className="mt-8 block w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg text-center hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg">
+                <Link href="/pricing?plan=pro" className="mt-8 block w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg text-center hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg">
                   选择专业版
                 </Link>
               </div>
@@ -381,7 +387,7 @@ export default function Home() {
                   <span className="text-5xl font-bold text-gray-900">¥199</span>
                   <span className="text-gray-600 ml-2">/月</span>
                 </p>
-                <Link href="/auth/signup?plan=team" className="mt-8 block w-full py-3 px-4 bg-white border border-gray-300 text-blue-600 font-medium rounded-lg text-center hover:bg-gray-50 transition-colors">
+                <Link href="/pricing?plan=team" className="mt-8 block w-full py-3 px-4 bg-white border border-gray-300 text-blue-600 font-medium rounded-lg text-center hover:bg-gray-50 transition-colors">
                   选择团队版
                 </Link>
               </div>

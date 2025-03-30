@@ -1,6 +1,17 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #0070f3;
+  --color-apple-blue: #0070f3;
+  --color-apple-cyan: #5AC8FA;
+  --color-apple-green: #34C759;
+  --color-apple-orange: #FF9500;
+  --color-apple-red: #FF3B30;
+  --color-apple-purple: #AF52DE;
+  --color-apple-gray-light: #F2F2F7;
+  --color-apple-gray-medium: #E5E5EA;
+  --color-apple-gray-dark: #8E8E93;
+}
 
 :root {
   --foreground-rgb: 0, 0, 0;

@@ -54,7 +54,15 @@ export default function Dashboard() {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('退出登录错误:', error.message);
+        return;
+      }
+      
+      setUser(null);
+      setShowUserMenu(false);
       router.push('/');
     } catch (error) {
       console.error('退出登录错误:', error.message);
@@ -133,7 +141,7 @@ export default function Dashboard() {
                         <Link href="/dashboard/account" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                           账户设置
                         </Link>
-                        <Link href="/dashboard/pricing" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        <Link href="/pricing" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                           升级账户
                         </Link>
                         <button 
@@ -183,7 +191,7 @@ export default function Dashboard() {
                       </div>
                       <div className="mt-2 text-xs text-blue-100 flex justify-between">
                         <span>本月已使用: {creditUsage}%</span>
-                        <Link href="/dashboard/pricing" className="text-white underline hover:no-underline">
+                        <Link href="/pricing" className="text-white underline hover:no-underline">
                           升级账户
                         </Link>
                       </div>
@@ -507,7 +515,7 @@ export default function Dashboard() {
                       <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
                         免费用户
                       </span>
-                      <Link href="/dashboard/pricing" className="ml-3 text-sm text-blue-600 hover:text-blue-500">
+                      <Link href="/pricing" className="ml-3 text-sm text-blue-600 hover:text-blue-500">
                         升级账户
                       </Link>
                     </dd>
@@ -523,7 +531,7 @@ export default function Dashboard() {
                             style={{ width: `${100 - creditUsage}%` }}
                           ></div>
                         </div>
-                        <Link href="/dashboard/pricing" className="ml-3 text-sm text-blue-600 hover:text-blue-500">
+                        <Link href="/pricing" className="ml-3 text-sm text-blue-600 hover:text-blue-500">
                           购买积分
                         </Link>
                       </div>
