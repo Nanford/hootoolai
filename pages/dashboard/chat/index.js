@@ -6,10 +6,11 @@ import {
   FaArrowLeft, FaPaperPlane, FaTimes, FaRobot, FaUser, 
   FaRegLightbulb, FaPlus, FaEllipsisV, FaHistory,
   FaDownload, FaTrash, FaSave, FaInfoCircle, FaRegCopy,
-  FaChevronRight, FaChevronDown, FaRegFile, FaMagic
+  FaChevronRight, FaChevronDown, FaRegFile, FaMagic,
+  FaCog, FaBrain, FaExchangeAlt
 } from 'react-icons/fa';
 import { supabase } from '../../../utils/supabase';
-import { callDeepseekChat, formatChatMessages, generateChatTitle, streamDeepseekChat } from '../../../utils/api';
+import { callChatAPI, formatChatMessages, generateChatTitle, getAvailableModels } from '../../../utils/api';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
@@ -28,6 +29,10 @@ export default function Chat() {
   const [showHelpPanel, setShowHelpPanel] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
   const [thinking, setThinking] = useState('');
+  const [provider, setProvider] = useState('deepseek');
+  const [selectedModel, setSelectedModel] = useState('deepseek-chat');
+  const [showModelSelector, setShowModelSelector] = useState(false);
+  const [availableModels, setAvailableModels] = useState({});
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const router = useRouter();
@@ -51,6 +56,19 @@ export default function Chat() {
 
     checkUser();
   }, [router]);
+
+  // 获取可用的模型列表
+  useEffect(() => {
+    setAvailableModels(getAvailableModels());
+  }, []);
+  
+  // 更新当前选择的模型
+  useEffect(() => {
+    // 确保当选择提供商变化时，选中该提供商下的第一个模型
+    if (availableModels[provider] && (!selectedModel || !availableModels[provider].find(m => m.id === selectedModel))) {
+      setSelectedModel(availableModels[provider][0]?.id);
+    }
+  }, [provider, availableModels]);
 
   // 模拟加载聊天历史
   const loadChatHistory = () => {
@@ -84,7 +102,9 @@ export default function Chat() {
       id: 1,
       role: 'assistant',
       content: '你好！我是HooTool AI助手，有什么可以帮到你的吗？',
-      timestamp: new Date()
+      timestamp: new Date(),
+      model: selectedModel,
+      provider: provider
     }]);
   };
 
@@ -100,7 +120,9 @@ export default function Chat() {
         id: 1,
         role: 'assistant',
         content: '你好！我是HooTool AI助手，有什么可以帮到你的吗？',
-        timestamp: new Date()
+        timestamp: new Date(),
+        model: selectedModel,
+        provider: provider
       }]);
     }
     setShowChatOptions(false);
@@ -166,12 +188,12 @@ export default function Chat() {
     setThinking('');
     
     try {
-      // 准备消息历史记录，格式化为DeepSeek API所需格式
+      // 准备消息历史记录，格式化为API所需格式
       const chatMessages = formatChatMessages([
         // 系统提示，定义AI助手的行为
         { 
           role: 'system', 
-          content: '你是HooTool AI的智能助手，基于DeepSeek技术。你的目标是提供有用、准确和有见解的回答。保持友好和专业的语气，尽量提供具体的建议和信息。如果你不确定，请坦诚地表示，而不是提供错误信息。你的回答将以Markdown格式显示，所以可以使用Markdown语法来格式化你的回答，例如标题、列表、代码块等。'
+          content: `你是HooTool AI的智能助手，基于${provider === 'deepseek' ? 'DeepSeek' : 'OpenAI'}技术。你的目标是提供有用、准确和有见解的回答。保持友好和专业的语气，尽量提供具体的建议和信息。如果你不确定，请坦诚地表示，而不是提供错误信息。你的回答将以Markdown格式显示，所以可以使用Markdown语法来格式化你的回答，例如标题、列表、代码块等。`
         },
         // 添加聊天历史记录，不包括系统消息
         ...messages.filter(m => m.role !== 'system'),
@@ -179,10 +201,12 @@ export default function Chat() {
         userMessage
       ]);
       
-      // 使用流式API
-      const response = await streamDeepseekChat(
+      // 使用通用API调用函数
+      const response = await callChatAPI(
+        provider,
+        selectedModel,
         chatMessages,
-        { temperature: 0.7, max_tokens: 2000 },
+        { temperature: 0.7, max_tokens: 2000, stream: true },
         (content, thinkingProcess) => {
           // 更新流式内容
           setStreamingContent(content);
@@ -201,7 +225,9 @@ export default function Chat() {
       const assistantMessage = { 
         role: 'assistant', 
         content: response.content, 
-        timestamp: new Date() 
+        timestamp: new Date(),
+        model: selectedModel,
+        provider: provider
       };
       setMessages(prev => [...prev, assistantMessage]);
       
@@ -290,10 +316,33 @@ export default function Chat() {
     }
     
     return (
-      <div className="prose prose-sm max-w-none">
+      <div className="prose prose-sm max-w-none w-full leading-relaxed">
         <ReactMarkdown 
           rehypePlugins={[rehypeRaw, rehypeSanitize]}
           remarkPlugins={[remarkGfm]}
+          components={{
+            p: ({node, ...props}) => <p className="mb-5 leading-relaxed" {...props} />,
+            li: ({node, ...props}) => <li className="leading-relaxed mb-2" {...props} />,
+            table: ({node, ...props}) => (
+              <div className="overflow-x-auto my-5">
+                <table className="min-w-full divide-y divide-gray-200" {...props} />
+              </div>
+            ),
+            pre: ({node, ...props}) => (
+              <pre className="bg-gray-50 rounded-md p-5 overflow-x-auto my-5" {...props} />
+            ),
+            code: ({node, inline, className, children, ...props}) => (
+              inline 
+                ? <code className="bg-gray-100 px-1 py-0.5 rounded text-sm" {...props}>{children}</code>
+                : <code className="block bg-gray-50 p-5 rounded-md text-sm overflow-x-auto" {...props}>{children}</code>
+            ),
+            h1: ({node, ...props}) => <h1 className="text-xl font-bold mt-7 mb-5 leading-relaxed" {...props} />,
+            h2: ({node, ...props}) => <h2 className="text-lg font-bold mt-6 mb-4 leading-relaxed" {...props} />,
+            h3: ({node, ...props}) => <h3 className="text-md font-bold mt-5 mb-3 leading-relaxed" {...props} />,
+            ul: ({node, ...props}) => <ul className="list-disc pl-6 mb-5 space-y-3" {...props} />,
+            ol: ({node, ...props}) => <ol className="list-decimal pl-6 mb-5 space-y-3" {...props} />,
+            blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-gray-200 pl-4 py-1 my-5 text-gray-700 italic" {...props} />
+          }}
         >
           {content}
         </ReactMarkdown>
@@ -323,7 +372,7 @@ export default function Chat() {
       </Head>
 
       <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center">
               <Link href="/dashboard" className="text-gray-500 hover:text-green-600 mr-3">
@@ -357,7 +406,7 @@ export default function Chat() {
       <div className="flex-1 flex overflow-hidden">
         {/* 侧边栏：聊天历史 */}
         {showSidebar && (
-          <div className="w-80 bg-white border-r border-gray-200 flex flex-col overflow-hidden hidden md:flex">
+          <div className="w-64 bg-white border-r border-gray-200 flex flex-col overflow-hidden hidden md:flex">
             <div className="p-4 border-b border-gray-200">
               <button 
                 onClick={createNewChat}
@@ -429,7 +478,7 @@ export default function Chat() {
         {showSidebar && (
           <div className="absolute inset-0 bg-gray-600 bg-opacity-75 z-20 md:hidden" 
                onClick={() => setShowSidebar(false)}>
-            <div className="absolute inset-y-0 left-0 w-80 bg-white shadow-xl" 
+            <div className="absolute inset-y-0 left-0 w-64 bg-white shadow-xl" 
                  onClick={e => e.stopPropagation()}>
               <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                 <button 
@@ -520,13 +569,98 @@ export default function Chat() {
                 <h2 className="text-sm font-medium text-gray-900">
                   {chatHistory.find(c => c.id === currentChatId)?.title || '新的对话'}
                 </h2>
-                <p className="text-xs text-gray-500">
-                  AI助手 - 基于DeepSeek
+                <p className="text-xs text-gray-500 relative">
+                  AI助手 - 基于{provider === 'deepseek' ? 'DeepSeek' : 'OpenAI'} 
+                  <button 
+                    onClick={() => setShowModelSelector(!showModelSelector)}
+                    className="ml-2 text-green-600 hover:text-green-700 focus:outline-none inline-flex items-center bg-green-50 px-2 py-1 rounded-md border border-green-100"
+                  >
+                    <span>{availableModels[provider]?.find(m => m.id === selectedModel)?.name || selectedModel}</span>
+                    <svg className="ml-1 h-3 w-3" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 16L6 10H18L12 16Z" fill="currentColor"/>
+                    </svg>
+                  </button>
+                  
+                  {/* 模型选择器 */}
+                  {showModelSelector && (
+                    <div className="absolute left-0 top-full mt-2 w-64 bg-white rounded-md shadow-lg z-20 border border-gray-200">
+                      <div className="py-2 px-3 border-b border-gray-200">
+                        <h3 className="text-sm font-medium text-gray-900">选择AI模型</h3>
+                      </div>
+                      
+                      <div className="p-3">
+                        <div className="mb-3">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-xs font-medium text-gray-700">AI提供商</span>
+                          </div>
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => setProvider('deepseek')}
+                              className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center ${
+                                provider === 'deepseek' 
+                                  ? 'bg-green-100 text-green-800 border border-green-300' 
+                                  : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
+                              }`}
+                            >
+                              <svg className="mr-1.5 h-3 w-3" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20ZM16.59 8.59L12 13.17L7.41 8.59L6 10L12 16L18 10L16.59 8.59Z" fill="currentColor"/>
+                              </svg>
+                              DeepSeek
+                            </button>
+                            <button
+                              onClick={() => setProvider('openai')}
+                              className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center ${
+                                provider === 'openai' 
+                                  ? 'bg-green-100 text-green-800 border border-green-300' 
+                                  : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
+                              }`}
+                            >
+                              <svg className="mr-1.5 h-3 w-3" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M21 7.5L12 2L3 7.5V16.5L12 22L21 16.5V7.5ZM12 4.2L18 7.9L12 11.6L6 7.9L12 4.2ZM5 9.8L11 13.5V19.8L5 16.1V9.8ZM13 19.8V13.5L19 9.8V16.1L13 19.8Z" fill="currentColor"/>
+                              </svg>
+                              OpenAI
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <div className="text-xs font-medium text-gray-700 mb-2">可用模型</div>
+                          <div className="space-y-2">
+                            {availableModels[provider]?.map((model) => (
+                              <button
+                                key={model.id}
+                                onClick={() => {
+                                  setSelectedModel(model.id);
+                                  setShowModelSelector(false);
+                                }}
+                                className={`w-full text-left px-3 py-2 rounded-md text-xs transition-colors ${
+                                  selectedModel === model.id
+                                    ? 'bg-green-50 text-green-800 border border-green-200'
+                                    : 'hover:bg-gray-50 border border-gray-100'
+                                }`}
+                              >
+                                <div className="font-medium">{model.name}</div>
+                                <div className="text-gray-500 text-xs mt-0.5">{model.description}</div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </p>
               </div>
             </div>
             
-            <div className="relative">
+            <div className="relative flex items-center space-x-2">
+              <button 
+                onClick={() => setShowHelpPanel(!showHelpPanel)}
+                className="text-gray-500 hover:text-green-600 p-2 rounded-full hover:bg-green-50"
+                aria-label="帮助"
+              >
+                <FaInfoCircle className="h-5 w-5" />
+              </button>
+              
               <button 
                 onClick={() => setShowChatOptions(!showChatOptions)}
                 className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100"
@@ -535,7 +669,7 @@ export default function Chat() {
               </button>
               
               {showChatOptions && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200">
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200 top-full">
                   <div className="py-1">
                     <button
                       onClick={createNewChat}
@@ -574,21 +708,29 @@ export default function Chat() {
                   </div>
                 </div>
               )}
+              
+              <button 
+                onClick={() => setShowSidebar(!showSidebar)}
+                className="text-gray-500 hover:text-green-600 p-2 rounded-full hover:bg-green-50 md:hidden"
+                aria-label="切换侧边栏"
+              >
+                <FaHistory className="h-5 w-5" />
+              </button>
             </div>
           </div>
           
           {/* 聊天消息区域 */}
-          <div className="flex-1 overflow-y-auto py-4 px-4 sm:px-6 bg-gray-50">
-            <div className="max-w-3xl mx-auto space-y-6">
+          <div className="flex-1 overflow-y-auto py-4 px-4 sm:px-6 lg:px-10 xl:px-16 bg-gray-50">
+            <div className="max-w-7xl mx-auto space-y-8">
               {messages.map((message, index) => (
                 <div 
                   key={index} 
                   className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div className={`flex max-w-md ${
+                  <div className={`flex max-w-3xl ${
                     message.role === 'user' 
-                      ? 'bg-blue-600 text-white rounded-2xl px-4 py-3 shadow-sm rounded-tr-none' 
-                      : 'bg-white text-gray-700 rounded-2xl px-4 py-3 shadow-sm rounded-tl-none'
+                      ? 'bg-blue-600 text-white rounded-2xl px-5 py-4 shadow-sm rounded-tr-none' 
+                      : 'bg-white text-gray-700 rounded-2xl px-5 py-4 shadow-sm rounded-tl-none'
                   }`}>
                     <div className="flex-shrink-0 mr-3 mt-1">
                       {message.role === 'user' ? (
@@ -607,11 +749,16 @@ export default function Chat() {
                       ) : (
                         renderMessageContent(message.content, message.isError)
                       )}
-                      {message.timestamp && (
-                        <div className={`text-xs mt-2 ${message.role === 'user' ? 'text-blue-200' : 'text-gray-400'}`}>
+                      <div className={`flex justify-between items-center mt-2 ${message.role === 'user' ? 'text-blue-200' : 'text-gray-400'}`}>
+                        <div className="text-xs">
                           {formatTime(message.timestamp)}
                         </div>
-                      )}
+                        {message.role === 'assistant' && message.model && (
+                          <div className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
+                            {availableModels[message.provider]?.find(m => m.id === message.model)?.name || message.model}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -619,7 +766,7 @@ export default function Chat() {
               
               {sending && (
                 <div className="flex justify-start">
-                  <div className="flex max-w-md bg-white text-gray-700 rounded-2xl px-4 py-3 shadow-sm rounded-tl-none">
+                  <div className="flex max-w-3xl bg-white text-gray-700 rounded-2xl px-5 py-4 shadow-sm rounded-tl-none">
                     <div className="flex-shrink-0 mr-3 mt-1">
                       <div className="h-8 w-8 rounded-full bg-white border border-green-200 flex items-center justify-center">
                         <FaRobot className="h-4 w-4 text-green-600" />
@@ -637,7 +784,7 @@ export default function Chat() {
                       )}
                       
                       {streamingContent && (
-                        <div>
+                        <div className="w-full">
                           {renderMessageContent(streamingContent)}
                           {thinking && (
                             <div className="mt-2 p-2 bg-gray-50 rounded-md border border-gray-100 text-xs text-gray-500">
@@ -658,7 +805,7 @@ export default function Chat() {
           
           {/* 帮助面板 */}
           {showHelpPanel && (
-            <div className="absolute right-0 top-16 w-80 bg-white shadow-xl border-l border-gray-200 h-[calc(100vh-4rem)] z-20 overflow-y-auto">
+            <div className="absolute right-0 top-16 w-64 bg-white shadow-xl border-l border-gray-200 h-[calc(100vh-4rem)] z-20 overflow-y-auto">
               <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                 <h3 className="font-medium text-gray-900">AI助手使用指南</h3>
                 <button
@@ -760,8 +907,8 @@ export default function Chat() {
           )}
           
           {/* 输入区域 */}
-          <div className="bg-white border-t border-gray-200 p-4">
-            <div className="max-w-3xl mx-auto">
+          <div className="bg-white border-t border-gray-200 p-4 sm:p-5">
+            <div className="max-w-7xl mx-auto">
               {messages.length === 1 && (
                 <div className="mb-4">
                   <p className="text-sm text-gray-600 mb-2 flex items-center">
@@ -814,7 +961,7 @@ export default function Chat() {
               
               <div className="mt-2 flex justify-between items-center">
                 <p className="text-xs text-gray-500">
-                  该AI助手基于DeepSeek大语言模型
+                  当前使用: {provider === 'deepseek' ? 'DeepSeek' : 'OpenAI'} - {availableModels[provider]?.find(m => m.id === selectedModel)?.name || selectedModel}
                 </p>
                 <div className="flex items-center">
                   <span className="text-xs text-gray-500">每次对话消耗1积分</span>
