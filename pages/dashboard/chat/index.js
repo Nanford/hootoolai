@@ -800,36 +800,36 @@ export default function Chat() {
   const renderEmptyState = () => {
     return (
       <div className="flex flex-col items-center justify-center h-full py-10 px-4 text-center">
-        <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-4">
-          <FaMagic className="h-8 w-8" />
+        <div className="h-20 w-20 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-6">
+          <FaMagic className="h-10 w-10" />
         </div>
-        <h2 className="text-xl font-bold text-gray-900 mb-2">欢迎使用 HooTool AI 助手</h2>
-        <p className="text-gray-600 mb-6 max-w-md">创建一个新的聊天，开始与AI助手交流获取帮助。</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-3">欢迎使用 HooTool AI 助手</h2>
+        <p className="text-gray-600 mb-8 max-w-md">创建一个新的聊天，开始与AI助手交流获取帮助。</p>
         <button 
           onClick={createNewChat}
-          className="flex items-center justify-center px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+          className="flex items-center justify-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md"
         >
           <FaPlus className="h-4 w-4 mr-2" />
           新建聊天
         </button>
         
-        <div className="mt-10 max-w-lg">
-          <h3 className="text-sm font-medium text-gray-900 mb-3">AI助手能帮您做什么？</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-              <div className="text-green-600 mb-2"><FaRegFile className="h-5 w-5" /></div>
+        <div className="mt-12 max-w-2xl w-full">
+          <h3 className="text-sm font-medium text-gray-900 mb-4">AI助手能帮您做什么？</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="text-green-600 mb-3"><FaRegFile className="h-6 w-6" /></div>
               <p className="text-sm text-gray-800">撰写和编辑各类文档、邮件和文案</p>
             </div>
-            <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-              <div className="text-green-600 mb-2"><FaBrain className="h-5 w-5" /></div>
+            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="text-green-600 mb-3"><FaBrain className="h-6 w-6" /></div>
               <p className="text-sm text-gray-800">解答知识问题和提供研究支持</p>
             </div>
-            <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-              <div className="text-green-600 mb-2"><FaRegLightbulb className="h-5 w-5" /></div>
+            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="text-green-600 mb-3"><FaRegLightbulb className="h-6 w-6" /></div>
               <p className="text-sm text-gray-800">头脑风暴创意和解决方案</p>
             </div>
-            <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-              <div className="text-green-600 mb-2"><FaExchangeAlt className="h-5 w-5" /></div>
+            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="text-green-600 mb-3"><FaExchangeAlt className="h-6 w-6" /></div>
               <p className="text-sm text-gray-800">翻译和语言学习辅助</p>
             </div>
           </div>
@@ -902,7 +902,9 @@ export default function Chat() {
                 <FaArrowLeft className="h-5 w-5" />
               </Link>
               <div className="flex items-center">
-                <FaMagic className="h-6 w-6 text-green-600 mr-2" />
+                <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 mr-2">
+                  <FaMagic className="h-4 w-4" />
+                </div>
                 <h1 className="text-xl font-bold text-gray-900">AI助手</h1>
               </div>
             </div>
@@ -930,7 +932,7 @@ export default function Chat() {
         {/* 侧边栏：聊天历史 */}
         {showSidebar && (
           <div className="w-64 bg-white border-r border-gray-200 flex flex-col overflow-hidden hidden md:flex">
-            <div className="p-4 border-b border-gray-200">
+            <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-green-50 to-white">
               <button 
                 onClick={createNewChat}
                 className="w-full flex items-center justify-center px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
@@ -942,18 +944,18 @@ export default function Chat() {
             
             <div className="flex-1 overflow-hidden py-2">
               <div className="px-3">
-                <div className="text-xs font-medium text-gray-500 uppercase tracking-wider px-2 py-2">
+                <div className="text-xs font-medium text-green-600 uppercase tracking-wider px-2 py-2">
                   聊天历史
                 </div>
                 
-                <div className="space-y-1">
+                <div className="space-y-2">
                   {chatHistory.map((chat) => (
                     <div 
                       key={chat.id}
                       className={`flex items-start p-2 rounded-lg transition-colors group ${
                         currentChatId === chat.id 
-                          ? 'bg-green-50 border-l-2 border-green-600' 
-                          : 'hover:bg-gray-50'
+                          ? 'bg-green-50 border border-green-100 shadow-sm' 
+                          : 'hover:bg-gray-50 hover:border hover:border-gray-100 hover:shadow-sm'
                       }`}
                     >
                       <div 
@@ -967,7 +969,7 @@ export default function Chat() {
                         onClick={() => selectChat(chat.id)}
                       >
                         <div className="flex items-start justify-between">
-                          <p className={`text-sm font-medium ${currentChatId === chat.id ? 'text-green-900' : 'text-gray-900'} truncate max-w-[100px]`}>
+                          <p className={`text-sm font-medium ${currentChatId === chat.id ? 'text-green-700' : 'text-gray-900'} truncate max-w-[100px]`}>
                             {renderChatTitle(chat)}
                           </p>
                           <span className="text-xs text-gray-500 whitespace-nowrap ml-1">
@@ -996,7 +998,7 @@ export default function Chat() {
               </div>
             </div>
             
-            <div className="p-4 border-t border-gray-200 bg-gray-50">
+            <div className="p-4 border-t border-gray-200 bg-gradient-to-r from-green-50 to-white">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <div className="h-9 w-9 rounded-full bg-green-600 flex items-center justify-center text-white">
@@ -1007,7 +1009,7 @@ export default function Chat() {
                   <p className="text-sm font-medium text-gray-900 truncate">
                     {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
                   </p>
-                  <p className="text-xs text-gray-500 truncate">
+                  <p className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full inline-block mt-1">
                     剩余积分: 85
                   </p>
                 </div>
@@ -1022,7 +1024,7 @@ export default function Chat() {
                onClick={() => setShowSidebar(false)}>
             <div className="absolute inset-y-0 left-0 w-64 bg-white shadow-xl" 
                  onClick={e => e.stopPropagation()}>
-              <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+              <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gradient-to-r from-green-50 to-white">
                 <button 
                   onClick={createNewChat}
                   className="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
@@ -1040,18 +1042,18 @@ export default function Chat() {
               
               <div className="flex-1 overflow-hidden py-2">
                 <div className="px-3">
-                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wider px-2 py-2">
+                  <div className="text-xs font-medium text-green-600 uppercase tracking-wider px-2 py-2">
                     聊天历史
                   </div>
                   
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     {chatHistory.map((chat) => (
                       <div 
                         key={chat.id}
                         className={`flex items-start p-2 rounded-lg transition-colors group ${
                           currentChatId === chat.id 
-                            ? 'bg-green-50 border-l-2 border-green-600' 
-                            : 'hover:bg-gray-50'
+                            ? 'bg-green-50 border border-green-100 shadow-sm' 
+                            : 'hover:bg-gray-50 hover:border hover:border-gray-100 hover:shadow-sm'
                         }`}
                       >
                         <div 
@@ -1100,7 +1102,7 @@ export default function Chat() {
                 </div>
               </div>
               
-              <div className="p-4 border-t border-gray-200 bg-gray-50 absolute bottom-0 w-full">
+              <div className="p-4 border-t border-gray-200 bg-gradient-to-r from-green-50 to-white absolute bottom-0 w-full">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <div className="h-9 w-9 rounded-full bg-green-600 flex items-center justify-center text-white">
@@ -1111,7 +1113,7 @@ export default function Chat() {
                     <p className="text-sm font-medium text-gray-900 truncate">
                       {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
                     </p>
-                    <p className="text-xs text-gray-500 truncate">
+                    <p className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full inline-block mt-1">
                       剩余积分: 85
                     </p>
                   </div>
@@ -1124,7 +1126,7 @@ export default function Chat() {
         {/* 主聊天区域 */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* 聊天头部 */}
-          <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+          <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm">
             <div className="flex items-center">
               <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 mr-3">
                 <FaRobot className="h-4 w-4" />
@@ -1134,10 +1136,13 @@ export default function Chat() {
                   {currentChatId ? renderChatTitle(chatHistory.find(c => c.id === currentChatId)) : 'AI助手'}
                 </h2>
                 <p className="text-xs text-gray-500 relative">
-                  AI助手 - 基于{provider === 'deepseek' ? 'DeepSeek' : 'OpenAI'} 
+                  AI助手 - 基于
+                  <span className="px-1.5 py-0.5 bg-green-50 rounded text-green-700 mx-1 inline-flex items-center">
+                    {provider === 'deepseek' ? 'DeepSeek' : 'OpenAI'}
+                  </span>
                   <button 
                     onClick={() => setShowModelSelector(!showModelSelector)}
-                    className="ml-2 text-green-600 hover:text-green-700 focus:outline-none inline-flex items-center bg-green-50 px-2 py-1 rounded-md border border-green-100"
+                    className="ml-2 text-green-600 hover:text-green-700 focus:outline-none inline-flex items-center bg-green-50 px-2 py-0.5 rounded-md border border-green-100"
                   >
                     <span>{availableModels[provider]?.find(m => m.id === selectedModel)?.name || selectedModel}</span>
                     <svg className="ml-1 h-3 w-3" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1147,8 +1152,8 @@ export default function Chat() {
                   
                   {/* 模型选择器 */}
                   {showModelSelector && (
-                    <div className="absolute left-0 top-full mt-2 w-64 bg-white rounded-md shadow-lg z-20 border border-gray-200">
-                      <div className="py-2 px-3 border-b border-gray-200">
+                    <div className="absolute left-0 top-full mt-2 w-64 bg-white rounded-lg shadow-lg z-20 border border-gray-200 overflow-hidden">
+                      <div className="py-2 px-3 border-b border-gray-200 bg-gradient-to-r from-green-50 to-white">
                         <h3 className="text-sm font-medium text-gray-900">选择AI模型</h3>
                       </div>
                       
@@ -1236,18 +1241,18 @@ export default function Chat() {
                     key={index} 
                     className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className={`flex max-w-3xl ${
+                    <div className={`flex max-w-3xl rounded-2xl px-5 py-4 shadow-sm ${
                       message.role === 'user' 
-                        ? 'bg-blue-600 text-white rounded-2xl px-5 py-4 shadow-sm rounded-tr-none' 
-                        : 'bg-white text-gray-700 rounded-2xl px-5 py-4 shadow-sm rounded-tl-none'
+                        ? 'bg-green-600 text-white rounded-br-none' 
+                        : 'bg-white border border-gray-100 text-gray-700 rounded-bl-none'
                     }`}>
                       <div className="flex-shrink-0 mr-3 mt-1">
                         {message.role === 'user' ? (
-                          <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
+                          <div className="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center text-white">
                             <FaUser className="h-4 w-4" />
                           </div>
                         ) : (
-                          <div className="h-8 w-8 rounded-full bg-white border border-green-200 flex items-center justify-center">
+                          <div className="h-8 w-8 rounded-full bg-green-50 border border-green-200 flex items-center justify-center">
                             <FaRobot className="h-4 w-4 text-green-600" />
                           </div>
                         )}
@@ -1258,12 +1263,12 @@ export default function Chat() {
                         ) : (
                           renderMessageContent(message.content, message.isError)
                         )}
-                        <div className={`flex justify-between items-center mt-2 ${message.role === 'user' ? 'text-blue-200' : 'text-gray-400'}`}>
+                        <div className={`flex justify-between items-center mt-2 ${message.role === 'user' ? 'text-green-100' : 'text-gray-400'}`}>
                           <div className="text-xs">
                             {formatTime(message.timestamp)}
                           </div>
                           {message.role === 'assistant' && message.model && (
-                            <div className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
+                            <div className="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded">
                               {availableModels[message.provider]?.find(m => m.id === message.model)?.name || message.model}
                             </div>
                           )}
@@ -1275,9 +1280,9 @@ export default function Chat() {
                 
                 {sending && (
                   <div className="flex justify-start">
-                    <div className="flex max-w-3xl bg-white text-gray-700 rounded-2xl px-5 py-4 shadow-sm rounded-tl-none">
+                    <div className="flex max-w-3xl bg-white border border-gray-100 text-gray-700 rounded-2xl px-5 py-4 shadow-sm rounded-bl-none">
                       <div className="flex-shrink-0 mr-3 mt-1">
-                        <div className="h-8 w-8 rounded-full bg-white border border-green-200 flex items-center justify-center">
+                        <div className="h-8 w-8 rounded-full bg-green-50 border border-green-200 flex items-center justify-center">
                           <FaRobot className="h-4 w-4 text-green-600" />
                         </div>
                       </div>
@@ -1296,8 +1301,8 @@ export default function Chat() {
                           <div className="w-full">
                             {renderMessageContent(streamingContent)}
                             {thinking && (
-                              <div className="mt-2 p-2 bg-gray-50 rounded-md border border-gray-100 text-xs text-gray-500">
-                                <div className="font-semibold text-gray-600 mb-1">思考过程:</div>
+                              <div className="mt-2 p-2 bg-green-50 rounded-md border border-green-100 text-xs text-gray-600">
+                                <div className="font-semibold text-green-600 mb-1">思考过程:</div>
                                 {thinking}
                               </div>
                             )}
@@ -1317,97 +1322,111 @@ export default function Chat() {
           
           {/* 帮助面板 */}
           {showHelpPanel && (
-            <div className="absolute right-0 top-16 w-64 bg-white shadow-xl border-l border-gray-200 h-[calc(100vh-4rem)] z-20 overflow-y-auto">
-              <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-                <h3 className="font-medium text-gray-900">AI助手使用指南</h3>
+            <div className="absolute right-0 top-16 w-72 bg-white shadow-lg border-l border-gray-200 h-[calc(100vh-4rem)] z-20 overflow-y-auto">
+              <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gradient-to-r from-green-50 to-white">
+                <h3 className="font-medium text-gray-900 flex items-center">
+                  <FaInfoCircle className="text-green-600 mr-2 h-4 w-4" />
+                  AI助手使用指南
+                </h3>
                 <button
                   onClick={() => setShowHelpPanel(false)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-500 hover:text-gray-700 bg-white w-7 h-7 rounded-full flex items-center justify-center"
                 >
-                  <FaTimes className="h-4 w-4" />
+                  <FaTimes className="h-3 w-3" />
                 </button>
               </div>
               
-              <div className="p-4 space-y-4">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
-                    <FaRegLightbulb className="text-green-600 mr-2 h-4 w-4" />
+              <div className="p-5 space-y-6">
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 hover:shadow-md transition-shadow">
+                  <h4 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
+                    <div className="h-6 w-6 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-2">
+                      <FaRegLightbulb className="h-3 w-3" />
+                    </div>
                     如何有效提问
                   </h4>
-                  <ul className="space-y-2 text-sm text-gray-600">
+                  <ul className="space-y-3 text-sm text-gray-600">
                     <li className="flex items-start">
-                      <FaChevronRight className="h-3 w-3 text-green-600 mt-1 mr-2 flex-shrink-0" />
+                      <FaChevronRight className="h-3 w-3 text-green-500 mt-1 mr-2 flex-shrink-0" />
                       提供具体和详细的问题，避免模糊描述
                     </li>
                     <li className="flex items-start">
-                      <FaChevronRight className="h-3 w-3 text-green-600 mt-1 mr-2 flex-shrink-0" />
+                      <FaChevronRight className="h-3 w-3 text-green-500 mt-1 mr-2 flex-shrink-0" />
                       一次只问一个问题，获得更精准的回答
                     </li>
                     <li className="flex items-start">
-                      <FaChevronRight className="h-3 w-3 text-green-600 mt-1 mr-2 flex-shrink-0" />
+                      <FaChevronRight className="h-3 w-3 text-green-500 mt-1 mr-2 flex-shrink-0" />
                       明确指出您需要的深度和格式
                     </li>
                   </ul>
                 </div>
                 
-                <div className="border-t border-gray-200 pt-4">
-                  <h4 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
-                    <FaRegFile className="text-green-600 mr-2 h-4 w-4" />
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 hover:shadow-md transition-shadow">
+                  <h4 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
+                    <div className="h-6 w-6 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-2">
+                      <FaRegFile className="h-3 w-3" />
+                    </div>
                     AI助手能力
                   </h4>
-                  <ul className="space-y-2 text-sm text-gray-600">
+                  <ul className="space-y-3 text-sm text-gray-600">
                     <li className="flex items-start">
-                      <FaChevronRight className="h-3 w-3 text-green-600 mt-1 mr-2 flex-shrink-0" />
+                      <FaChevronRight className="h-3 w-3 text-green-500 mt-1 mr-2 flex-shrink-0" />
                       撰写和编辑各类文档、邮件和文案
                     </li>
                     <li className="flex items-start">
-                      <FaChevronRight className="h-3 w-3 text-green-600 mt-1 mr-2 flex-shrink-0" />
+                      <FaChevronRight className="h-3 w-3 text-green-500 mt-1 mr-2 flex-shrink-0" />
                       解答知识问题和提供研究支持
                     </li>
                     <li className="flex items-start">
-                      <FaChevronRight className="h-3 w-3 text-green-600 mt-1 mr-2 flex-shrink-0" />
+                      <FaChevronRight className="h-3 w-3 text-green-500 mt-1 mr-2 flex-shrink-0" />
                       头脑风暴创意和解决方案
                     </li>
                     <li className="flex items-start">
-                      <FaChevronRight className="h-3 w-3 text-green-600 mt-1 mr-2 flex-shrink-0" />
+                      <FaChevronRight className="h-3 w-3 text-green-500 mt-1 mr-2 flex-shrink-0" />
                       翻译和语言学习辅助
                     </li>
                   </ul>
                 </div>
                 
-                <div className="border-t border-gray-200 pt-4">
-                  <h4 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
-                    <FaInfoCircle className="text-green-600 mr-2 h-4 w-4" />
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 hover:shadow-md transition-shadow">
+                  <h4 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
+                    <div className="h-6 w-6 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-2">
+                      <FaInfoCircle className="h-3 w-3" />
+                    </div>
                     使用限制
                   </h4>
-                  <p className="text-sm text-gray-600 mb-2">
+                  <p className="text-sm text-gray-600 mb-3">
                     AI助手基于DeepSeek大语言模型，在以下方面可能有限制：
                   </p>
-                  <ul className="space-y-2 text-sm text-gray-600">
+                  <ul className="space-y-3 text-sm text-gray-600">
                     <li className="flex items-start">
-                      <FaChevronRight className="h-3 w-3 text-green-600 mt-1 mr-2 flex-shrink-0" />
+                      <FaChevronRight className="h-3 w-3 text-green-500 mt-1 mr-2 flex-shrink-0" />
                       知识截止日期为2024年3月，可能不了解最新信息
                     </li>
                     <li className="flex items-start">
-                      <FaChevronRight className="h-3 w-3 text-green-600 mt-1 mr-2 flex-shrink-0" />
+                      <FaChevronRight className="h-3 w-3 text-green-500 mt-1 mr-2 flex-shrink-0" />
                       不能访问互联网或实时数据
                     </li>
                     <li className="flex items-start">
-                      <FaChevronRight className="h-3 w-3 text-green-600 mt-1 mr-2 flex-shrink-0" />
+                      <FaChevronRight className="h-3 w-3 text-green-500 mt-1 mr-2 flex-shrink-0" />
                       不能运行代码或与其他系统交互
                     </li>
                   </ul>
                 </div>
                 
-                <div className="bg-green-50 rounded-lg p-4 mt-4">
-                  <h4 className="text-sm font-medium text-green-800 mb-2">积分使用说明</h4>
+                <div className="bg-green-50 rounded-lg p-4 mt-4 border border-green-100 shadow-sm">
+                  <h4 className="text-sm font-medium text-green-800 mb-2 flex items-center">
+                    <div className="h-5 w-5 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-2">
+                      <FaCog className="h-2.5 w-2.5" />
+                    </div>
+                    积分使用说明
+                  </h4>
                   <p className="text-xs text-green-700">
                     每次对话消耗1积分，约1000字。专业版和团队版用户可享受更高的使用限额和更快的响应速度。
                   </p>
-                  <div className="mt-2">
+                  <div className="mt-3">
                     <Link 
                       href="/dashboard/pricing" 
-                      className="text-xs font-medium text-green-700 hover:text-green-800 flex items-center"
+                      className="text-xs font-medium text-green-700 hover:text-green-800 flex items-center bg-white px-3 py-1.5 rounded-full shadow-sm inline-block border border-green-200"
                     >
                       了解更多
                       <FaChevronRight className="ml-1 h-2 w-2" />
@@ -1421,7 +1440,7 @@ export default function Chat() {
           {/* 输入区域 */}
           {currentChatId && (
             <div className="bg-white border-t border-gray-200 p-4 sm:p-5">
-              <div className="max-w-7xl mx-auto">
+              <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                 {messages.length === 1 && (
                   <div className="mb-4">
                     <p className="text-sm text-gray-600 mb-2 flex items-center">
@@ -1432,7 +1451,7 @@ export default function Chat() {
                       {suggestions.map((suggestion, index) => (
                         <button
                           key={index}
-                          className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 py-1.5 px-3 rounded-full transition-colors"
+                          className="text-sm bg-green-50 hover:bg-green-100 text-green-700 py-1.5 px-3 rounded-full transition-colors"
                           onClick={() => setInput(suggestion)}
                         >
                           {suggestion}
@@ -1449,7 +1468,7 @@ export default function Chat() {
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyDown={handleKeyDown}
-                      className="block w-full rounded-xl pl-4 pr-10 py-3 border border-gray-300 shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-900"
+                      className="block w-full rounded-xl pl-4 pr-10 py-3 border border-gray-200 shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-900 bg-gray-50"
                       placeholder="输入消息..."
                       disabled={sending}
                       ref={inputRef}
@@ -1473,27 +1492,32 @@ export default function Chat() {
                   </button>
                 </form>
                 
-                <div className="mt-2 flex justify-between items-center">
-                  <p className="text-xs text-gray-500">
-                    当前使用: {provider === 'deepseek' ? 'DeepSeek' : 'OpenAI'} - {availableModels[provider]?.find(m => m.id === selectedModel)?.name || selectedModel}
-                  </p>
+                <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center">
                   <div className="flex items-center">
-                    <span className="text-xs text-gray-500 mr-3">每次对话消耗1积分</span>
+                    <div className="flex-shrink-0 h-6 w-6 rounded-full bg-green-100 flex items-center justify-center mr-2">
+                      <FaRobot className="h-3 w-3 text-green-600" />
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {provider === 'deepseek' ? 'DeepSeek' : 'OpenAI'} - {availableModels[provider]?.find(m => m.id === selectedModel)?.name || selectedModel}
+                    </p>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-xs text-gray-500 mr-3 bg-green-50 px-2 py-1 rounded-full">每次对话消耗1积分</span>
                     <div className="relative">
                       <button
                         type="button"
                         onClick={() => setShowSendSettings(!showSendSettings)}
-                        className="text-xs text-gray-500 hover:text-green-600 flex items-center"
+                        className="text-xs bg-gray-50 text-gray-500 hover:text-green-600 flex items-center px-2 py-1 rounded-full border border-gray-200"
                       >
                         <FaCog className="h-3 w-3 mr-1" />
                         {enterToSend ? 'Enter发送' : 'Ctrl+Enter发送'}
                       </button>
                       
                       {showSendSettings && (
-                        <div className="absolute bottom-6 right-0 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200">
+                        <div className="absolute bottom-8 right-0 w-48 bg-white rounded-lg shadow-lg z-10 border border-gray-200 overflow-hidden">
                           <div className="p-2">
-                            <div className="text-xs font-medium text-gray-700 mb-2">发送消息方式</div>
-                            <label className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded cursor-pointer">
+                            <div className="text-xs font-medium text-gray-700 mb-2 px-2 pt-1">发送消息方式</div>
+                            <label className="flex items-center space-x-2 p-2 hover:bg-green-50 rounded cursor-pointer">
                               <input 
                                 type="radio" 
                                 checked={enterToSend} 
@@ -1505,7 +1529,7 @@ export default function Chat() {
                               />
                               <span className="text-sm text-gray-700">按Enter发送</span>
                             </label>
-                            <label className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded cursor-pointer">
+                            <label className="flex items-center space-x-2 p-2 hover:bg-green-50 rounded cursor-pointer">
                               <input 
                                 type="radio" 
                                 checked={!enterToSend} 
@@ -1521,8 +1545,7 @@ export default function Chat() {
                         </div>
                       )}
                     </div>
-                    <span className="mx-2 h-1 w-1 rounded-full bg-gray-300"></span>
-                    <Link href="/dashboard/pricing" className="text-xs text-green-600 hover:text-green-700">
+                    <Link href="/dashboard/pricing" className="text-xs text-green-600 hover:text-green-700 ml-3 bg-green-50 px-2 py-1 rounded-full border border-green-100">
                       升级账户
                     </Link>
                   </div>
@@ -1544,7 +1567,7 @@ export default function Chat() {
           width: 8px;
           float: left;
           margin: 0 1px;
-          background-color: #9880ff;
+          background-color: #10b981;
           display: block;
           border-radius: 50%;
           opacity: 0.4;
