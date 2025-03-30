@@ -186,7 +186,7 @@ export default function Home() {
                 <div className="relative">
                   <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
                     <div className="p-1">
-                      <div className="h-64 sm:h-80 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
+                      <div className="h-64 sm:h-80 bg-gradient-to-br from-blue-600 via-purple-500/90 to-pink-400/80 rounded-xl flex items-center justify-center">
                         <div className="text-center p-6">
                           <FaMagic className="h-12 w-12 text-white/90 mx-auto mb-4" />
                           <div className="text-xl text-white font-bold">AI 创作助手</div>

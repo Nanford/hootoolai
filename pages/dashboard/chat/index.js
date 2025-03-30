@@ -36,6 +36,8 @@ export default function Chat() {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const router = useRouter();
+  const [showSendSettings, setShowSendSettings] = useState(false);
+  const [enterToSend, setEnterToSend] = useState(true);
 
   useEffect(() => {
     // 检查用户是否已登录
@@ -350,6 +352,20 @@ export default function Chat() {
     );
   };
 
+  // 添加键盘事件处理函数
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      if (!e.shiftKey) {
+        if ((enterToSend && !e.ctrlKey) || (!enterToSend && e.ctrlKey)) {
+          e.preventDefault();
+          if (input.trim()) {
+            handleSubmit(e);
+          }
+        }
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -417,7 +433,7 @@ export default function Chat() {
               </button>
             </div>
             
-            <div className="flex-1 overflow-y-auto py-2">
+            <div className="flex-1 overflow-hidden py-2">
               <div className="px-3">
                 <div className="text-xs font-medium text-gray-500 uppercase tracking-wider px-2 py-2">
                   聊天历史
@@ -427,27 +443,46 @@ export default function Chat() {
                   {chatHistory.map((chat) => (
                     <div 
                       key={chat.id}
-                      className={`flex items-start p-2 rounded-lg cursor-pointer transition-colors ${
+                      className={`flex items-start p-2 rounded-lg transition-colors group ${
                         currentChatId === chat.id 
                           ? 'bg-green-50 border-l-2 border-green-600' 
                           : 'hover:bg-gray-50'
                       }`}
-                      onClick={() => selectChat(chat.id)}
                     >
-                      <div className="h-9 w-9 flex-shrink-0 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3">
+                      <div 
+                        className="h-9 w-9 flex-shrink-0 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3"
+                        onClick={() => selectChat(chat.id)}
+                      >
                         <FaRobot className="h-4 w-4" />
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div 
+                        className="flex-1 min-w-0 cursor-pointer"
+                        onClick={() => selectChat(chat.id)}
+                      >
                         <div className="flex items-start justify-between">
-                          <p className={`text-sm font-medium ${currentChatId === chat.id ? 'text-green-900' : 'text-gray-900'} truncate`}>
+                          <p className={`text-sm font-medium ${currentChatId === chat.id ? 'text-green-900' : 'text-gray-900'} truncate max-w-[100px]`}>
                             {chat.title}
                           </p>
                           <span className="text-xs text-gray-500 whitespace-nowrap ml-1">
                             {formatDate(chat.date)}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1 truncate">{chat.lastMessage}</p>
+                        <p className="text-xs text-gray-500 mt-1 truncate max-w-[150px]">{chat.lastMessage}</p>
                       </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (chat.id === currentChatId) {
+                            deleteCurrentChat();
+                          } else {
+                            setChatHistory(prev => prev.filter(c => c.id !== chat.id));
+                          }
+                        }}
+                        className="text-gray-400 hover:text-red-500 p-1 self-center flex-shrink-0 ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="删除对话"
+                      >
+                        <FaTrash className="h-3.5 w-3.5" />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -496,7 +531,7 @@ export default function Chat() {
                 </button>
               </div>
               
-              <div className="flex-1 overflow-y-auto py-2 h-[calc(100vh-8rem)]">
+              <div className="flex-1 overflow-hidden py-2">
                 <div className="px-3">
                   <div className="text-xs font-medium text-gray-500 uppercase tracking-wider px-2 py-2">
                     聊天历史
@@ -506,30 +541,52 @@ export default function Chat() {
                     {chatHistory.map((chat) => (
                       <div 
                         key={chat.id}
-                        className={`flex items-start p-2 rounded-lg cursor-pointer transition-colors ${
+                        className={`flex items-start p-2 rounded-lg transition-colors group ${
                           currentChatId === chat.id 
                             ? 'bg-green-50 border-l-2 border-green-600' 
                             : 'hover:bg-gray-50'
                         }`}
-                        onClick={() => {
-                          selectChat(chat.id);
-                          setShowSidebar(false);
-                        }}
                       >
-                        <div className="h-9 w-9 flex-shrink-0 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3">
+                        <div 
+                          className="h-9 w-9 flex-shrink-0 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3"
+                          onClick={() => {
+                            selectChat(chat.id);
+                            setShowSidebar(false);
+                          }}
+                        >
                           <FaRobot className="h-4 w-4" />
                         </div>
-                        <div className="flex-1 min-w-0">
+                        <div 
+                          className="flex-1 min-w-0 cursor-pointer"
+                          onClick={() => {
+                            selectChat(chat.id);
+                            setShowSidebar(false);
+                          }}
+                        >
                           <div className="flex items-start justify-between">
-                            <p className="text-sm font-medium text-gray-900 truncate">
+                            <p className="text-sm font-medium text-gray-900 truncate max-w-[100px]">
                               {chat.title}
                             </p>
                             <span className="text-xs text-gray-500 whitespace-nowrap ml-1">
                               {formatDate(chat.date)}
                             </span>
                           </div>
-                          <p className="text-xs text-gray-500 mt-1 truncate">{chat.lastMessage}</p>
+                          <p className="text-xs text-gray-500 mt-1 truncate max-w-[150px]">{chat.lastMessage}</p>
                         </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (chat.id === currentChatId) {
+                              deleteCurrentChat();
+                            } else {
+                              setChatHistory(prev => prev.filter(c => c.id !== chat.id));
+                            }
+                          }}
+                          className="text-gray-400 hover:text-red-500 p-1 self-center flex-shrink-0 ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="删除对话"
+                        >
+                          <FaTrash className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -660,54 +717,6 @@ export default function Chat() {
               >
                 <FaInfoCircle className="h-5 w-5" />
               </button>
-              
-              <button 
-                onClick={() => setShowChatOptions(!showChatOptions)}
-                className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100"
-              >
-                <FaEllipsisV className="h-5 w-5" />
-              </button>
-              
-              {showChatOptions && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200 top-full">
-                  <div className="py-1">
-                    <button
-                      onClick={createNewChat}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                    >
-                      <FaPlus className="h-4 w-4 mr-3 text-gray-500" />
-                      新建聊天
-                    </button>
-                    <button
-                      onClick={saveCurrentChat}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                    >
-                      <FaSave className="h-4 w-4 mr-3 text-gray-500" />
-                      保存聊天
-                    </button>
-                    <button
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                    >
-                      <FaDownload className="h-4 w-4 mr-3 text-gray-500" />
-                      导出聊天记录
-                    </button>
-                    <button
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                    >
-                      <FaRegCopy className="h-4 w-4 mr-3 text-gray-500" />
-                      复制对话
-                    </button>
-                    <div className="border-t border-gray-200 my-1"></div>
-                    <button
-                      onClick={deleteCurrentChat}
-                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center"
-                    >
-                      <FaTrash className="h-4 w-4 mr-3 text-red-500" />
-                      删除聊天
-                    </button>
-                  </div>
-                </div>
-              )}
               
               <button 
                 onClick={() => setShowSidebar(!showSidebar)}
@@ -935,6 +944,7 @@ export default function Chat() {
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
                     className="block w-full rounded-xl pl-4 pr-10 py-3 border border-gray-300 shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-900"
                     placeholder="输入消息..."
                     disabled={sending}
@@ -964,7 +974,49 @@ export default function Chat() {
                   当前使用: {provider === 'deepseek' ? 'DeepSeek' : 'OpenAI'} - {availableModels[provider]?.find(m => m.id === selectedModel)?.name || selectedModel}
                 </p>
                 <div className="flex items-center">
-                  <span className="text-xs text-gray-500">每次对话消耗1积分</span>
+                  <span className="text-xs text-gray-500 mr-3">每次对话消耗1积分</span>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowSendSettings(!showSendSettings)}
+                      className="text-xs text-gray-500 hover:text-green-600 flex items-center"
+                    >
+                      <FaCog className="h-3 w-3 mr-1" />
+                      {enterToSend ? 'Enter发送' : 'Ctrl+Enter发送'}
+                    </button>
+                    
+                    {showSendSettings && (
+                      <div className="absolute bottom-6 right-0 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200">
+                        <div className="p-2">
+                          <div className="text-xs font-medium text-gray-700 mb-2">发送消息方式</div>
+                          <label className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded cursor-pointer">
+                            <input 
+                              type="radio" 
+                              checked={enterToSend} 
+                              onChange={() => {
+                                setEnterToSend(true);
+                                setShowSendSettings(false);
+                              }}
+                              className="text-green-600 focus:ring-green-500"
+                            />
+                            <span className="text-sm text-gray-700">按Enter发送</span>
+                          </label>
+                          <label className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded cursor-pointer">
+                            <input 
+                              type="radio" 
+                              checked={!enterToSend} 
+                              onChange={() => {
+                                setEnterToSend(false);
+                                setShowSendSettings(false);
+                              }}
+                              className="text-green-600 focus:ring-green-500"
+                            />
+                            <span className="text-sm text-gray-700">按Ctrl+Enter发送</span>
+                          </label>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   <span className="mx-2 h-1 w-1 rounded-full bg-gray-300"></span>
                   <Link href="/dashboard/pricing" className="text-xs text-green-600 hover:text-green-700">
                     升级账户
