@@ -736,13 +736,16 @@ export default function Chat() {
       if (newChatHistory.length > 0) {
         selectChat(newChatHistory[0].id);
       } else {
-        // 如果没有其他聊天，创建一个新的
-        createNewChat();
+        // 当删除最后一个聊天时，不再自动创建新的聊天
+        // 清空当前聊天ID和消息
+        setCurrentChatId(null);
+        setMessages([]);
       }
     } catch (error) {
       console.error('删除聊天时出错:', error);
-      // 出错时强制创建新聊天
-      createNewChat();
+      // 出错时清空当前聊天状态，而不是强制创建新聊天
+      setCurrentChatId(null);
+      setMessages([]);
     }
   };
 
@@ -789,6 +792,48 @@ export default function Chat() {
         >
           {content}
         </ReactMarkdown>
+      </div>
+    );
+  };
+
+  // 渲染空状态界面
+  const renderEmptyState = () => {
+    return (
+      <div className="flex flex-col items-center justify-center h-full py-10 px-4 text-center">
+        <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-4">
+          <FaMagic className="h-8 w-8" />
+        </div>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">欢迎使用 HooTool AI 助手</h2>
+        <p className="text-gray-600 mb-6 max-w-md">创建一个新的聊天，开始与AI助手交流获取帮助。</p>
+        <button 
+          onClick={createNewChat}
+          className="flex items-center justify-center px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+        >
+          <FaPlus className="h-4 w-4 mr-2" />
+          新建聊天
+        </button>
+        
+        <div className="mt-10 max-w-lg">
+          <h3 className="text-sm font-medium text-gray-900 mb-3">AI助手能帮您做什么？</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+              <div className="text-green-600 mb-2"><FaRegFile className="h-5 w-5" /></div>
+              <p className="text-sm text-gray-800">撰写和编辑各类文档、邮件和文案</p>
+            </div>
+            <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+              <div className="text-green-600 mb-2"><FaBrain className="h-5 w-5" /></div>
+              <p className="text-sm text-gray-800">解答知识问题和提供研究支持</p>
+            </div>
+            <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+              <div className="text-green-600 mb-2"><FaRegLightbulb className="h-5 w-5" /></div>
+              <p className="text-sm text-gray-800">头脑风暴创意和解决方案</p>
+            </div>
+            <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+              <div className="text-green-600 mb-2"><FaExchangeAlt className="h-5 w-5" /></div>
+              <p className="text-sm text-gray-800">翻译和语言学习辅助</p>
+            </div>
+          </div>
+        </div>
       </div>
     );
   };
@@ -1086,7 +1131,7 @@ export default function Chat() {
               </div>
               <div>
                 <h2 className="text-sm font-medium text-gray-900">
-                  {renderChatTitle(chatHistory.find(c => c.id === currentChatId))}
+                  {currentChatId ? renderChatTitle(chatHistory.find(c => c.id === currentChatId)) : 'AI助手'}
                 </h2>
                 <p className="text-xs text-gray-500 relative">
                   AI助手 - 基于{provider === 'deepseek' ? 'DeepSeek' : 'OpenAI'} 
@@ -1184,86 +1229,90 @@ export default function Chat() {
           
           {/* 聊天消息区域 */}
           <div className="flex-1 overflow-y-auto py-4 px-4 sm:px-6 lg:px-10 xl:px-16 bg-gray-50">
-            <div className="max-w-7xl mx-auto space-y-8">
-              {messages.map((message, index) => (
-                <div 
-                  key={index} 
-                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div className={`flex max-w-3xl ${
-                    message.role === 'user' 
-                      ? 'bg-blue-600 text-white rounded-2xl px-5 py-4 shadow-sm rounded-tr-none' 
-                      : 'bg-white text-gray-700 rounded-2xl px-5 py-4 shadow-sm rounded-tl-none'
-                  }`}>
-                    <div className="flex-shrink-0 mr-3 mt-1">
-                      {message.role === 'user' ? (
-                        <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
-                          <FaUser className="h-4 w-4" />
+            {currentChatId ? (
+              <div className="max-w-7xl mx-auto space-y-8">
+                {messages.map((message, index) => (
+                  <div 
+                    key={index} 
+                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div className={`flex max-w-3xl ${
+                      message.role === 'user' 
+                        ? 'bg-blue-600 text-white rounded-2xl px-5 py-4 shadow-sm rounded-tr-none' 
+                        : 'bg-white text-gray-700 rounded-2xl px-5 py-4 shadow-sm rounded-tl-none'
+                    }`}>
+                      <div className="flex-shrink-0 mr-3 mt-1">
+                        {message.role === 'user' ? (
+                          <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
+                            <FaUser className="h-4 w-4" />
+                          </div>
+                        ) : (
+                          <div className="h-8 w-8 rounded-full bg-white border border-green-200 flex items-center justify-center">
+                            <FaRobot className="h-4 w-4 text-green-600" />
+                          </div>
+                        )}
+                      </div>
+                      <div className={`flex-1 overflow-hidden ${message.role === 'user' ? 'text-white' : 'text-gray-700'}`}>
+                        {message.role === 'user' ? (
+                          <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                        ) : (
+                          renderMessageContent(message.content, message.isError)
+                        )}
+                        <div className={`flex justify-between items-center mt-2 ${message.role === 'user' ? 'text-blue-200' : 'text-gray-400'}`}>
+                          <div className="text-xs">
+                            {formatTime(message.timestamp)}
+                          </div>
+                          {message.role === 'assistant' && message.model && (
+                            <div className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
+                              {availableModels[message.provider]?.find(m => m.id === message.model)?.name || message.model}
+                            </div>
+                          )}
                         </div>
-                      ) : (
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {sending && (
+                  <div className="flex justify-start">
+                    <div className="flex max-w-3xl bg-white text-gray-700 rounded-2xl px-5 py-4 shadow-sm rounded-tl-none">
+                      <div className="flex-shrink-0 mr-3 mt-1">
                         <div className="h-8 w-8 rounded-full bg-white border border-green-200 flex items-center justify-center">
                           <FaRobot className="h-4 w-4 text-green-600" />
                         </div>
-                      )}
-                    </div>
-                    <div className={`flex-1 overflow-hidden ${message.role === 'user' ? 'text-white' : 'text-gray-700'}`}>
-                      {message.role === 'user' ? (
-                        <p className="whitespace-pre-wrap break-words">{message.content}</p>
-                      ) : (
-                        renderMessageContent(message.content, message.isError)
-                      )}
-                      <div className={`flex justify-between items-center mt-2 ${message.role === 'user' ? 'text-blue-200' : 'text-gray-400'}`}>
-                        <div className="text-xs">
-                          {formatTime(message.timestamp)}
-                        </div>
-                        {message.role === 'assistant' && message.model && (
-                          <div className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
-                            {availableModels[message.provider]?.find(m => m.id === message.model)?.name || message.model}
+                      </div>
+                      <div className="flex-1 overflow-hidden">
+                        {!streamingContent && (
+                          <div className="flex items-center">
+                            <div className="typing-indicator">
+                              <span></span>
+                              <span></span>
+                              <span></span>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {streamingContent && (
+                          <div className="w-full">
+                            {renderMessageContent(streamingContent)}
+                            {thinking && (
+                              <div className="mt-2 p-2 bg-gray-50 rounded-md border border-gray-100 text-xs text-gray-500">
+                                <div className="font-semibold text-gray-600 mb-1">思考过程:</div>
+                                {thinking}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-              
-              {sending && (
-                <div className="flex justify-start">
-                  <div className="flex max-w-3xl bg-white text-gray-700 rounded-2xl px-5 py-4 shadow-sm rounded-tl-none">
-                    <div className="flex-shrink-0 mr-3 mt-1">
-                      <div className="h-8 w-8 rounded-full bg-white border border-green-200 flex items-center justify-center">
-                        <FaRobot className="h-4 w-4 text-green-600" />
-                      </div>
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                      {!streamingContent && (
-                        <div className="flex items-center">
-                          <div className="typing-indicator">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {streamingContent && (
-                        <div className="w-full">
-                          {renderMessageContent(streamingContent)}
-                          {thinking && (
-                            <div className="mt-2 p-2 bg-gray-50 rounded-md border border-gray-100 text-xs text-gray-500">
-                              <div className="font-semibold text-gray-600 mb-1">思考过程:</div>
-                              {thinking}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              <div ref={messagesEndRef} />
-            </div>
+                )}
+                
+                <div ref={messagesEndRef} />
+              </div>
+            ) : (
+              renderEmptyState()
+            )}
           </div>
           
           {/* 帮助面板 */}
@@ -1370,115 +1419,117 @@ export default function Chat() {
           )}
           
           {/* 输入区域 */}
-          <div className="bg-white border-t border-gray-200 p-4 sm:p-5">
-            <div className="max-w-7xl mx-auto">
-              {messages.length === 1 && (
-                <div className="mb-4">
-                  <p className="text-sm text-gray-600 mb-2 flex items-center">
-                    <FaRegLightbulb className="text-green-600 mr-2 h-4 w-4" />
-                    <span>尝试以下提问：</span>
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {suggestions.map((suggestion, index) => (
-                      <button
-                        key={index}
-                        className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 py-1.5 px-3 rounded-full transition-colors"
-                        onClick={() => setInput(suggestion)}
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
+          {currentChatId && (
+            <div className="bg-white border-t border-gray-200 p-4 sm:p-5">
+              <div className="max-w-7xl mx-auto">
+                {messages.length === 1 && (
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-600 mb-2 flex items-center">
+                      <FaRegLightbulb className="text-green-600 mr-2 h-4 w-4" />
+                      <span>尝试以下提问：</span>
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {suggestions.map((suggestion, index) => (
+                        <button
+                          key={index}
+                          className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 py-1.5 px-3 rounded-full transition-colors"
+                          onClick={() => setInput(suggestion)}
+                        >
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-              
-              <form onSubmit={handleSubmit} className="flex items-center space-x-2">
-                <div className="relative flex-1">
-                  <input
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    className="block w-full rounded-xl pl-4 pr-10 py-3 border border-gray-300 shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-900"
-                    placeholder="输入消息..."
-                    disabled={sending}
-                    ref={inputRef}
-                  />
-                  {input && (
-                    <button
-                      type="button"
-                      onClick={() => setInput('')}
-                      className="absolute inset-y-0 right-3 flex items-center"
-                    >
-                      <FaTimes className="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                    </button>
-                  )}
-                </div>
-                <button
-                  type="submit"
-                  disabled={!input.trim() || sending}
-                  className="inline-flex items-center justify-center p-3 rounded-full bg-green-600 text-white disabled:opacity-50 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 shadow-sm transition-colors"
-                >
-                  <FaPaperPlane className="h-5 w-5" />
-                </button>
-              </form>
-              
-              <div className="mt-2 flex justify-between items-center">
-                <p className="text-xs text-gray-500">
-                  当前使用: {provider === 'deepseek' ? 'DeepSeek' : 'OpenAI'} - {availableModels[provider]?.find(m => m.id === selectedModel)?.name || selectedModel}
-                </p>
-                <div className="flex items-center">
-                  <span className="text-xs text-gray-500 mr-3">每次对话消耗1积分</span>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setShowSendSettings(!showSendSettings)}
-                      className="text-xs text-gray-500 hover:text-green-600 flex items-center"
-                    >
-                      <FaCog className="h-3 w-3 mr-1" />
-                      {enterToSend ? 'Enter发送' : 'Ctrl+Enter发送'}
-                    </button>
-                    
-                    {showSendSettings && (
-                      <div className="absolute bottom-6 right-0 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200">
-                        <div className="p-2">
-                          <div className="text-xs font-medium text-gray-700 mb-2">发送消息方式</div>
-                          <label className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded cursor-pointer">
-                            <input 
-                              type="radio" 
-                              checked={enterToSend} 
-                              onChange={() => {
-                                setEnterToSend(true);
-                                setShowSendSettings(false);
-                              }}
-                              className="text-green-600 focus:ring-green-500"
-                            />
-                            <span className="text-sm text-gray-700">按Enter发送</span>
-                          </label>
-                          <label className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded cursor-pointer">
-                            <input 
-                              type="radio" 
-                              checked={!enterToSend} 
-                              onChange={() => {
-                                setEnterToSend(false);
-                                setShowSendSettings(false);
-                              }}
-                              className="text-green-600 focus:ring-green-500"
-                            />
-                            <span className="text-sm text-gray-700">按Ctrl+Enter发送</span>
-                          </label>
-                        </div>
-                      </div>
+                )}
+                
+                <form onSubmit={handleSubmit} className="flex items-center space-x-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      className="block w-full rounded-xl pl-4 pr-10 py-3 border border-gray-300 shadow-sm focus:ring-green-500 focus:border-green-500 text-gray-900"
+                      placeholder="输入消息..."
+                      disabled={sending}
+                      ref={inputRef}
+                    />
+                    {input && (
+                      <button
+                        type="button"
+                        onClick={() => setInput('')}
+                        className="absolute inset-y-0 right-3 flex items-center"
+                      >
+                        <FaTimes className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                      </button>
                     )}
                   </div>
-                  <span className="mx-2 h-1 w-1 rounded-full bg-gray-300"></span>
-                  <Link href="/dashboard/pricing" className="text-xs text-green-600 hover:text-green-700">
-                    升级账户
-                  </Link>
+                  <button
+                    type="submit"
+                    disabled={!input.trim() || sending}
+                    className="inline-flex items-center justify-center p-3 rounded-full bg-green-600 text-white disabled:opacity-50 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 shadow-sm transition-colors"
+                  >
+                    <FaPaperPlane className="h-5 w-5" />
+                  </button>
+                </form>
+                
+                <div className="mt-2 flex justify-between items-center">
+                  <p className="text-xs text-gray-500">
+                    当前使用: {provider === 'deepseek' ? 'DeepSeek' : 'OpenAI'} - {availableModels[provider]?.find(m => m.id === selectedModel)?.name || selectedModel}
+                  </p>
+                  <div className="flex items-center">
+                    <span className="text-xs text-gray-500 mr-3">每次对话消耗1积分</span>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowSendSettings(!showSendSettings)}
+                        className="text-xs text-gray-500 hover:text-green-600 flex items-center"
+                      >
+                        <FaCog className="h-3 w-3 mr-1" />
+                        {enterToSend ? 'Enter发送' : 'Ctrl+Enter发送'}
+                      </button>
+                      
+                      {showSendSettings && (
+                        <div className="absolute bottom-6 right-0 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200">
+                          <div className="p-2">
+                            <div className="text-xs font-medium text-gray-700 mb-2">发送消息方式</div>
+                            <label className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded cursor-pointer">
+                              <input 
+                                type="radio" 
+                                checked={enterToSend} 
+                                onChange={() => {
+                                  setEnterToSend(true);
+                                  setShowSendSettings(false);
+                                }}
+                                className="text-green-600 focus:ring-green-500"
+                              />
+                              <span className="text-sm text-gray-700">按Enter发送</span>
+                            </label>
+                            <label className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded cursor-pointer">
+                              <input 
+                                type="radio" 
+                                checked={!enterToSend} 
+                                onChange={() => {
+                                  setEnterToSend(false);
+                                  setShowSendSettings(false);
+                                }}
+                                className="text-green-600 focus:ring-green-500"
+                              />
+                              <span className="text-sm text-gray-700">按Ctrl+Enter发送</span>
+                            </label>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <span className="mx-2 h-1 w-1 rounded-full bg-gray-300"></span>
+                    <Link href="/dashboard/pricing" className="text-xs text-green-600 hover:text-green-700">
+                      升级账户
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
       
