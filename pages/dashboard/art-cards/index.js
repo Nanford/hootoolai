@@ -1,36 +1,54 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { 
   FaArrowLeft, FaImage, FaDownload, FaPalette, FaRandom, 
   FaHistory, FaBookmark, FaShareAlt, FaLightbulb, FaMagic,
-  FaInfoCircle, FaCrown, FaChevronDown, FaChevronRight
+  FaInfoCircle, FaCrown, FaChevronDown, FaChevronRight, 
+  FaCode, FaCopy, FaEye, FaExpand, FaCompress
 } from 'react-icons/fa';
 
 export default function ArtCards() {
   const [prompt, setPrompt] = useState('');
-  const [style, setStyle] = useState('realistic');
+  const [style, setStyle] = useState('minimalist');
   const [ratio, setRatio] = useState('1:1');
-  const [mode, setMode] = useState('normal'); // normal or magazine
+  const [mode, setMode] = useState('magazine'); // 默认设置为magazine模式
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [savedTemplates, setSavedTemplates] = useState([]);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showStyleInfo, setShowStyleInfo] = useState(false);
+  const [fullScreenPreview, setFullScreenPreview] = useState(false);
   
-  // Magazine card specific
+  // 杂志卡片特定状态
   const [topic, setTopic] = useState('');
-  const [magStyle, setMagStyle] = useState('');
+  const [magStyle, setMagStyle] = useState('minimalist'); // 默认选择极简主义风格
   const [previewHtml, setPreviewHtml] = useState('');
+  const [showHtmlCode, setShowHtmlCode] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+  
+  // iframe预览引用
+  const iframeRef = useRef(null);
 
   useEffect(() => {
-    // Load saved templates
+    // 加载保存的模板
     setSavedTemplates([
-      { id: 1, name: "抽象艺术", prompt: "抽象艺术风格的山水画，用鲜艳的颜色和大胆的笔触", style: "abstract" },
-      { id: 2, name: "城市夜景", prompt: "未来城市的夜景，霓虹灯和高楼大厦，赛博朋克风格", style: "digital-art" },
-      { id: 3, name: "花卉特写", prompt: "一束盛开的百合花，柔和的自然光线，水彩风格", style: "watercolor" }
+      { id: 1, name: "科技创新", prompt: "如何用前沿科技改变未来生活", style: "futuristic-glam" },
+      { id: 2, name: "可持续生活", prompt: "打造更环保、可持续的生活方式", style: "organic-natural" },
+      { id: 3, name: "艺术欣赏", prompt: "如何欣赏和理解现代艺术作品", style: "contemporary-art" }
     ]);
   }, []);
+
+  // 当结果更新时，如果是杂志模式，将HTML内容更新到iframe
+  useEffect(() => {
+    if (result && result.html && iframeRef.current) {
+      const iframe = iframeRef.current;
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      iframeDoc.open();
+      iframeDoc.write(result.html);
+      iframeDoc.close();
+    }
+  }, [result]);
 
   const styles = [
     { id: 'realistic', name: '写实风格', desc: '逼真的细节和光影效果，如同照片般的表现力' },
@@ -52,14 +70,14 @@ export default function ArtCards() {
 
   // 杂志风格列表
   const magazineStyles = [
-    { id: 'minimalist', name: '极简主义风格', desc: '简约、精致、留白，让内容成为焦点' },
-    { id: 'bold-modern', name: '大胆现代风格', desc: '强烈对比色、不对称布局，充满视觉冲击力' },
-    { id: 'elegant-vintage', name: '优雅复古风格', desc: '怀旧色调、古典排版，散发典雅气息' },
-    { id: 'futuristic-glam', name: '极致未来主义风格', desc: '科技感十足，霓虹色彩与金属质感' },
-    { id: 'contemporary-art', name: '当代艺术风格', desc: '艺术展览般的布局，强调创意与艺术性' },
-    { id: 'luxury-baroque', name: '奢华巴洛克风格', desc: '华丽装饰、金色点缀，极致奢华' },
-    { id: 'organic-natural', name: '有机自然风格', desc: '大地色系、自然纹理，散发宁静高级感' },
-    { id: 'art-nouveau', name: '新艺术主义风格', desc: '流畅曲线、植物图案，浪漫优雅' }
+    { id: 'minimalist', name: '极简主义风格', desc: '遵循"少即是多"理念，简约、精致、留白，让内容成为焦点' },
+    { id: 'bold-modern', name: '大胆现代风格', desc: '打破传统排版规则，鲜艳对比色、不对称布局，充满视觉冲击力' },
+    { id: 'elegant-vintage', name: '优雅复古风格', desc: '重现20世纪初期印刷品美学，怀旧色调、古典排版，散发典雅气息' },
+    { id: 'futuristic-glam', name: '极致未来主义风格', desc: '灵感源于科幻电影，霓虹色彩与金属质感，科技感十足' },
+    { id: 'contemporary-art', name: '当代艺术风格', desc: '艺术展览般的布局，自由开放的排版，强调创意与艺术性' },
+    { id: 'luxury-baroque', name: '奢华巴洛克风格', desc: '源自17世纪欧洲宫廷，华丽装饰、金色点缀，繁复而不失品味' },
+    { id: 'organic-natural', name: '有机自然风格', desc: '大地色系、自然纹理，松散自由的排版，传达平和高级感' },
+    { id: 'art-nouveau', name: '新艺术主义风格', desc: '19世纪末欧洲经典风格，流畅曲线、植物图案，浪漫优雅' }
   ];
 
   const handleSubmit = async (e) => {
@@ -70,13 +88,13 @@ export default function ArtCards() {
     
     setLoading(true);
     setResult(null);
+    setPreviewHtml('');
     
     try {
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
       if (mode === 'normal') {
         // 设置正常模式的模拟结果
+        // 这里保留原有的模拟逻辑，实际项目中可以对接OpenAI API
+        await new Promise(resolve => setTimeout(resolve, 2000));
         setResult({
           url: '/hero-image.svg',
           prompt,
@@ -84,715 +102,388 @@ export default function ArtCards() {
           ratio
         });
       } else {
-        // 生成杂志卡片的HTML预览 (示例)
-        const html = `
-<!DOCTYPE html>
-<html lang="zh">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Magazine Card</title>
-  <link rel="stylesheet" href="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/tailwindcss/2.2.19/tailwind.min.css">
-  <link rel="stylesheet" href="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-100-M/font-awesome/6.0.0/css/all.min.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap">
-  <style>
-    .magazine-card {
-      font-family: 'Noto Sans SC', sans-serif;
-      width: 400px;
-      max-height: 1280px;
-      overflow: hidden;
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-      background: linear-gradient(to right, #f8f9fa, #e9ecef);
-      padding: 2rem;
-      position: relative;
-    }
-    .date-badge {
-      position: absolute;
-      top: 1.5rem;
-      right: 1.5rem;
-      background: #212529;
-      color: white;
-      padding: 0.5rem 1rem;
-      font-size: 0.8rem;
-      font-weight: 500;
-      letter-spacing: 1px;
-    }
-    .title {
-      font-family: 'Noto Serif SC', serif;
-      font-size: 2.5rem;
-      line-height: 1.2;
-      font-weight: 700;
-      color: #212529;
-      margin-top: 2rem;
-      margin-bottom: 1rem;
-    }
-    .subtitle {
-      font-size: 1.2rem;
-      color: #495057;
-      margin-bottom: 2rem;
-      font-weight: 400;
-    }
-    .quote-block {
-      border-left: 4px solid #212529;
-      padding-left: 1.5rem;
-      margin: 2rem 0;
-      color: #495057;
-      font-style: italic;
-    }
-    .key-points {
-      margin: 2rem 0;
-    }
-    .point-item {
-      display: flex;
-      align-items: baseline;
-      margin-bottom: 1rem;
-    }
-    .point-marker {
-      width: 1.5rem;
-      height: 1.5rem;
-      background: #212529;
-      color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 1rem;
-      flex-shrink: 0;
-      font-size: 0.8rem;
-      font-weight: bold;
-    }
-    .qr-section {
-      margin-top: 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      background: #f8f9fa;
-      padding: 1.5rem;
-      border-radius: 0.5rem;
-    }
-    .qr-image {
-      width: 120px;
-      margin-bottom: 1rem;
-    }
-    .editor-note {
-      margin-top: 2rem;
-      padding: 1.5rem;
-      background: #e9ecef;
-      font-size: 0.9rem;
-      position: relative;
-    }
-    .editor-note:before {
-      content: 'EDITOR\'S NOTE';
-      position: absolute;
-      top: -0.8rem;
-      left: 1rem;
-      background: #212529;
-      color: white;
-      padding: 0.2rem 0.8rem;
-      font-size: 0.7rem;
-      letter-spacing: 1px;
-    }
-  </style>
-</head>
-<body>
-  <div class="magazine-card">
-    <div class="date-badge">2025-03-23</div>
-    
-    <h1 class="title">${topic}</h1>
-    <p class="subtitle">探索思想的深度与广度</p>
-    
-    <div class="quote-block">
-      "真正的知识不仅需要我们去学习，更需要我们去思考、质疑和探索。"
-    </div>
-    
-    <div class="key-points">
-      <div class="point-item">
-        <div class="point-marker">1</div>
-        <div>知识不仅是信息的累积，更是思维框架的构建与完善</div>
-      </div>
-      <div class="point-item">
-        <div class="point-marker">2</div>
-        <div>批判性思维能力是现代社会最重要的核心竞争力之一</div>
-      </div>
-      <div class="point-item">
-        <div class="point-marker">3</div>
-        <div>跨学科学习有助于建立更全面、更有创造力的认知系统</div>
-      </div>
-      <div class="point-item">
-        <div class="point-marker">4</div>
-        <div>终身学习不是选择，而是适应快速变化世界的必要策略</div>
-      </div>
-    </div>
-    
-    <div class="qr-section">
-      <img src="https://img.picui.cn/free/2025/03/25/67e1a631794da.jpg" alt="QR Code" class="qr-image">
-      <div class="text-sm text-center">扫描二维码，获取更多精彩内容</div>
-    </div>
-    
-    <div class="editor-note">
-      持续学习和思考是现代社会中保持竞争力的关键。不要被信息过载所淹没，而是要培养筛选、分析和整合知识的能力。记住，真正的智慧不仅在于知道什么，更在于如何思考。
-    </div>
-  </div>
-</body>
-</html>`;
+        // 调用后端API生成杂志卡片
+        const response = await fetch('/api/generate-art-card', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            topic: topic,
+            style: magStyle
+          }),
+        });
         
-        setPreviewHtml(html);
+        const data = await response.json();
         
-        // 设置杂志模式的模拟结果
+        if (!response.ok) {
+          throw new Error(data.error || '生成失败');
+        }
+        
+        // 设置杂志模式的结果
+        setPreviewHtml(data.html);
         setResult({
-          html: html,
+          html: data.html,
           topic: topic,
           style: magStyle
         });
       }
     } catch (error) {
       console.error('生成艺术卡片错误:', error);
+      alert(`生成失败: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
 
   const applyTemplate = (template) => {
-    setPrompt(template.prompt);
-    setStyle(template.style);
+    setTopic(template.prompt);
+    setMagStyle(template.style);
     setShowTemplates(false);
   };
 
-  // CSS类名生成函数，基于当前模式设置不同的颜色风格
   const getButtonClass = (isPrimary) => {
-    if (mode === 'normal') {
-      return isPrimary 
-        ? "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
-        : "inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200";
-    } else {
-      return isPrimary 
-        ? "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200"
-        : "inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200";
+    return isPrimary
+      ? `flex items-center justify-center gap-2 px-4 py-2 rounded-md text-white font-medium ${getAccentColor()} hover:opacity-90 transition-all shadow-sm`
+      : `flex items-center justify-center gap-2 px-4 py-2 rounded-md border border-gray-300 hover:border-gray-400 text-gray-700 font-medium transition-all`;
+  };
+
+  const getAccentColor = () => {
+    return 'bg-blue-600';
+  };
+
+  // 复制HTML代码到剪贴板
+  const copyHtmlCode = () => {
+    if (result && result.html) {
+      navigator.clipboard.writeText(result.html);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
     }
   };
 
-  // 根据当前模式获取强调色
-  const getAccentColor = () => {
-    return mode === 'normal' ? 'indigo' : 'purple';
+  // 下载HTML文件
+  const downloadHtml = () => {
+    if (result && result.html) {
+      const blob = new Blob([result.html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${topic.replace(/\s+/g, '-').toLowerCase()}-${magStyle}-card.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
   };
-  
-  const accent = getAccentColor();
+
+  // 切换全屏预览
+  const toggleFullScreen = () => {
+    setFullScreenPreview(!fullScreenPreview);
+  };
 
   return (
-    <div className={`min-h-screen bg-gray-50`}>
+    <div className="min-h-screen bg-gray-50">
       <Head>
-        <title>艺术卡片生成 - HooTool AI</title>
-        <meta name="description" content="使用AI生成精美的艺术卡片" />
+        <title>杂志艺术卡片生成 | HooTool AI</title>
+        <meta name="description" content="使用AI生成精美的杂志艺术卡片" />
       </Head>
 
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center">
-              <Link href="/dashboard" className={`text-gray-500 hover:text-${accent}-600 mr-3`}>
-                <FaArrowLeft className="h-5 w-5" />
-              </Link>
-              <div className="flex items-center">
-                <FaMagic className={`h-6 w-6 text-${accent}-600 mr-2`} />
-                <h1 className="text-xl font-bold text-gray-900">
-                  {mode === 'normal' ? '艺术卡片生成' : '杂志风格卡片生成'}
-                </h1>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center mb-8">
+          <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-gray-900 mr-4">
+            <FaArrowLeft className="mr-2" /> 返回控制台
+          </Link>
+          <h1 className="text-2xl font-bold text-gray-900 flex-1">杂志艺术卡片生成</h1>
+        </div>
+
+        {fullScreenPreview && result ? (
+          <div className="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center p-4">
+            <div className="relative w-full max-w-2xl mx-auto">
+              <button 
+                onClick={toggleFullScreen}
+                className="absolute top-0 right-0 m-4 p-2 bg-white rounded-full shadow-lg z-10"
+              >
+                <FaCompress className="text-gray-700" />
+              </button>
+              <div className="bg-white rounded-xl shadow-xl overflow-hidden max-h-[90vh]">
+                <iframe
+                  ref={fullScreenPreview ? null : iframeRef}
+                  srcDoc={result.html}
+                  title="杂志卡片全屏预览"
+                  className="w-full border-none h-[90vh]"
+                />
               </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <button 
-                onClick={() => setMode('normal')} 
-                className={`px-3 py-2 text-sm font-medium rounded-lg ${
-                  mode === 'normal' 
-                    ? `bg-indigo-100 text-indigo-700 border border-indigo-200` 
-                    : `bg-white text-gray-500 border border-gray-200 hover:bg-gray-50`
-                }`}
-              >
-                <FaImage className="inline-block mr-1 mb-0.5" /> 艺术卡片
-              </button>
-              <button 
-                onClick={() => setMode('magazine')} 
-                className={`px-3 py-2 text-sm font-medium rounded-lg ${
-                  mode === 'magazine' 
-                    ? `bg-purple-100 text-purple-700 border border-purple-200` 
-                    : `bg-white text-gray-500 border border-gray-200 hover:bg-gray-50`
-                }`}
-              >
-                <FaPalette className="inline-block mr-1 mb-0.5" /> 杂志卡片
-              </button>
             </div>
           </div>
-        </div>
-      </header>
-
-      <main className="py-10 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-white shadow rounded-xl overflow-hidden">
-            <div className="p-6 sm:p-8">
-              {/* 模式切换指示 */}
-              <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className={`text-lg font-semibold text-${accent}-700`}>
-                    {mode === 'normal' ? '创建艺术卡片' : '创建杂志风格卡片'}
-                  </h2>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {mode === 'normal' 
-                      ? '使用AI生成精美的艺术图像，适用于社交媒体、演示文稿等场景' 
-                      : '生成高端杂志风格的精美知识卡片，令人眼前一亮的视觉体验'}
-                  </p>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* 左侧控制面板 */}
+            <div className="bg-white rounded-xl shadow-sm p-6 lg:col-span-1">
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold mb-4">生成设置</h2>
+                
+                <div className="mb-6">
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-medium text-gray-700">卡片主题</label>
+                  </div>
+                  <input
+                    type="text"
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    placeholder="输入主题，如：人工智能的未来"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">输入主题后，AI将创建一张精美的杂志风格知识卡片</p>
                 </div>
-                <div className="mt-4 sm:mt-0">
-                  <button 
-                    onClick={() => setShowTemplates(!showTemplates)}
-                    className={`inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg text-${accent}-600 bg-${accent}-50 hover:bg-${accent}-100`}
-                  >
-                    <FaBookmark className="mr-1.5 h-4 w-4" />
-                    我的模板
-                    {showTemplates ? <FaChevronDown className="ml-1 h-3 w-3" /> : <FaChevronRight className="ml-1 h-3 w-3" />}
-                  </button>
-                </div>
-              </div>
-              
-              {/* 保存的模板面板 */}
-              {showTemplates && (
-                <div className={`mb-6 bg-${accent}-50 rounded-lg p-4`}>
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">保存的模板</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {savedTemplates.map((template) => (
-                      <div 
-                        key={template.id} 
-                        className="bg-white rounded-lg border border-gray-200 p-3 cursor-pointer hover:border-indigo-300 hover:shadow-sm transition-all"
-                        onClick={() => applyTemplate(template)}
+                
+                <div className="mb-6">
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-medium text-gray-700">杂志风格</label>
+                    <button
+                      type="button"
+                      onClick={() => setShowStyleInfo(!showStyleInfo)}
+                      className="text-sm text-gray-500 flex items-center"
+                    >
+                      <FaInfoCircle className="mr-1" /> {showStyleInfo ? '隐藏风格说明' : '查看风格说明'}
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-2 max-h-[400px] overflow-y-auto pr-2">
+                    {magazineStyles.map((s) => (
+                      <div
+                        key={s.id}
+                        className={`p-3 rounded-md cursor-pointer border transition-all ${
+                          magStyle === s.id
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        onClick={() => setMagStyle(s.id)}
                       >
-                        <div className="flex items-start">
-                          <div className={`h-8 w-8 rounded-full bg-${accent}-100 flex items-center justify-center text-${accent}-600 flex-shrink-0`}>
-                            <FaPalette className="h-4 w-4" />
-                          </div>
-                          <div className="ml-3">
-                            <h4 className="text-sm font-medium text-gray-900">{template.name}</h4>
-                            <p className="text-xs text-gray-500 mt-1 line-clamp-2">{template.prompt}</p>
+                        <div className="flex items-center">
+                          <div className="flex-1">
+                            <div className="font-medium">{s.name}</div>
+                            {showStyleInfo && <div className="text-sm text-gray-500 mt-1">{s.desc}</div>}
                           </div>
                         </div>
                       </div>
                     ))}
-                    <div className={`bg-white rounded-lg border border-dashed border-gray-300 p-3 cursor-pointer hover:border-${accent}-300 flex items-center justify-center hover:bg-gray-50 transition-all h-full`}>
-                      <div className="flex flex-col items-center text-gray-500">
-                        <FaPlus className="h-5 w-5 mb-1" />
-                        <span className="text-sm">添加新模板</span>
+                  </div>
+                </div>
+                
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={loading || !topic.trim()}
+                  className={`w-full ${getButtonClass(true)} py-3 ${
+                    loading || !topic.trim() ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      生成中...
+                    </>
+                  ) : (
+                    <>
+                      <FaMagic className="mr-2" /> 生成杂志卡片
+                    </>
+                  )}
+                </button>
+              </div>
+              
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold">推荐模板</h2>
+                  <button
+                    type="button"
+                    onClick={() => setShowTemplates(!showTemplates)}
+                    className="text-sm text-gray-500 flex items-center"
+                  >
+                    {showTemplates ? <FaChevronDown className="mr-1" /> : <FaChevronRight className="mr-1" />}
+                    {showTemplates ? '收起' : '展开'}
+                  </button>
+                </div>
+                
+                {showTemplates && (
+                  <div className="space-y-3">
+                    {savedTemplates.map((template) => (
+                      <div
+                        key={template.id}
+                        className="p-3 border border-gray-200 rounded-md hover:border-gray-300 cursor-pointer"
+                        onClick={() => applyTemplate(template)}
+                      >
+                        <div className="font-medium">{template.name}</div>
+                        <div className="text-sm text-gray-500 truncate mt-1">{template.prompt}</div>
+                        <div className="mt-2">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                            {magazineStyles.find(s => s.id === template.style)?.name || template.style}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 功能说明卡片 */}
+              <div className="mt-6 bg-blue-50 rounded-xl p-5 border border-blue-100">
+                <h3 className="flex items-center text-blue-800 font-medium mb-2">
+                  <FaCrown className="mr-2" /> 高级杂志卡片特性
+                </h3>
+                <ul className="space-y-2 text-sm text-blue-700">
+                  <li className="flex items-start">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 mr-2 flex-shrink-0"></span>
+                    国际顶尖杂志视觉设计，8种精致风格
+                  </li>
+                  <li className="flex items-start">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 mr-2 flex-shrink-0"></span>
+                    专业排版与精美布局，完整的HTML代码
+                  </li>
+                  <li className="flex items-start">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 mr-2 flex-shrink-0"></span>
+                    一键下载，可直接用于个人网站或社交媒体
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* 右侧预览区域 */}
+            <div className="lg:col-span-2">
+              {result ? (
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                  <div className="p-4 border-b border-gray-200">
+                    <div className="flex justify-between items-center">
+                      <h2 className="text-lg font-semibold">卡片预览</h2>
+                      <div className="flex space-x-2">
+                        <button
+                          type="button"
+                          onClick={toggleFullScreen}
+                          className={getButtonClass(false)}
+                          aria-label="全屏预览"
+                        >
+                          <FaExpand className="mr-2" /> 全屏
+                        </button>
+                        <button
+                          type="button"
+                          onClick={downloadHtml}
+                          className={getButtonClass(false)}
+                          aria-label="下载HTML文件"
+                        >
+                          <FaDownload className="mr-2" /> 下载
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowHtmlCode(!showHtmlCode)}
+                          className={getButtonClass(false)}
+                        >
+                          {showHtmlCode ? <FaEye className="mr-2" /> : <FaCode className="mr-2" />}
+                          {showHtmlCode ? '查看预览' : '查看代码'}
+                        </button>
+                        {showHtmlCode && (
+                          <button
+                            type="button"
+                            onClick={copyHtmlCode}
+                            className={getButtonClass(false)}
+                          >
+                            <FaCopy className="mr-2" />
+                            {copiedCode ? '已复制' : '复制代码'}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-              
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* 正常模式的输入区域 */}
-                {mode === 'normal' && (
-                  <>
-                    <div>
-                      <label htmlFor="prompt" className="block text-sm font-medium text-gray-700 mb-1">
-                        描述您想要的艺术卡片
-                      </label>
-                      <textarea
-                        id="prompt"
-                        rows={4}
-                        className={`shadow-sm focus:ring-${accent}-500 focus:border-${accent}-500 block w-full sm:text-sm border-gray-300 rounded-lg`}
-                        placeholder="例如：一只在花丛中的蝴蝶，春天的阳光透过树叶，背景模糊"
-                        value={prompt}
-                        onChange={(e) => setPrompt(e.target.value)}
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <label htmlFor="style" className="block text-sm font-medium text-gray-700 mb-1">
-                            艺术风格
-                          </label>
-                          <button 
-                            type="button"
-                            className="text-xs text-gray-500 hover:text-gray-700"
-                            onClick={() => setShowStyleInfo(!showStyleInfo)}
-                          >
-                            <FaInfoCircle className="inline-block mr-1 mb-0.5" />
-                            查看风格说明
-                          </button>
-                        </div>
-                        <select
-                          id="style"
-                          className={`mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-${accent}-500 focus:border-${accent}-500 sm:text-sm rounded-lg`}
-                          value={style}
-                          onChange={(e) => setStyle(e.target.value)}
-                        >
-                          {styles.map((s) => (
-                            <option key={s.id} value={s.id}>{s.name}</option>
-                          ))}
-                        </select>
+                  
+                  <div className="p-6">
+                    {showHtmlCode ? (
+                      // HTML代码预览
+                      <div className="relative">
+                        <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-auto max-h-[600px] text-sm">
+                          {result.html}
+                        </pre>
+                      </div>
+                    ) : (
+                      // 卡片预览
+                      <div className="flex justify-center">
+                        {mode === 'magazine' && (
+                          <div className="w-full max-w-md overflow-hidden">
+                            <iframe
+                              ref={iframeRef}
+                              title="杂志卡片预览"
+                              className="w-full border-none min-h-[600px]"
+                            />
+                          </div>
+                        )}
                         
-                        {/* 风格说明面板 */}
-                        {showStyleInfo && (
-                          <div className="mt-2 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">
-                            <h4 className="font-medium text-gray-700 mb-2">风格说明</h4>
-                            <p>{styles.find(s => s.id === style)?.desc || '选择一种风格来查看说明'}</p>
+                        {mode === 'normal' && (
+                          <div className="relative">
+                            <img src={result.url} alt={result.prompt} className="max-w-full h-auto rounded-md" />
                           </div>
                         )}
                       </div>
-                      
-                      <div>
-                        <label htmlFor="ratio" className="block text-sm font-medium text-gray-700 mb-1">
-                          尺寸比例
-                        </label>
-                        <select
-                          id="ratio"
-                          className={`mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-${accent}-500 focus:border-${accent}-500 sm:text-sm rounded-lg`}
-                          value={ratio}
-                          onChange={(e) => setRatio(e.target.value)}
-                        >
-                          {ratios.map((r) => (
-                            <option key={r.id} value={r.id}>{r.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  </>
-                )}
-                
-                {/* 杂志卡片模式的输入区域 */}
-                {mode === 'magazine' && (
-                  <>
-                    <div>
-                      <label htmlFor="topic" className="block text-sm font-medium text-gray-700 mb-1">
-                        输入卡片主题
-                      </label>
-                      <input
-                        id="topic"
-                        type="text"
-                        className={`shadow-sm focus:ring-${accent}-500 focus:border-${accent}-500 block w-full sm:text-sm border-gray-300 rounded-lg`}
-                        placeholder="例如：终身学习、批判性思维、创造力培养等"
-                        value={topic}
-                        onChange={(e) => setTopic(e.target.value)}
-                      />
-                      <p className="mt-1 text-xs text-gray-500">这个主题将会生成一张精美的杂志风格知识卡片</p>
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="magStyle" className="block text-sm font-medium text-gray-700 mb-1">
-                        杂志风格
-                      </label>
-                      <select
-                        id="magStyle"
-                        className={`mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-${accent}-500 focus:border-${accent}-500 sm:text-sm rounded-lg`}
-                        value={magStyle}
-                        onChange={(e) => setMagStyle(e.target.value)}
-                      >
-                        <option value="">随机风格 (推荐)</option>
-                        {magazineStyles.map((s) => (
-                          <option key={s.id} value={s.id}>{s.name}</option>
-                        ))}
-                      </select>
-                      <p className="mt-1 text-xs text-gray-500">让AI随机选择风格会带来惊喜的效果</p>
-                    </div>
-                    
-                    <div className={`bg-${accent}-50 rounded-lg p-4 text-sm text-gray-700`}>
-                      <h4 className={`font-medium text-${accent}-700 flex items-center mb-2`}>
-                        <FaCrown className="mr-2 h-4 w-4" />
-                        杂志卡片特性
-                      </h4>
-                      <ul className="space-y-2 pl-6 list-disc">
-                        <li>由国际顶尖杂志设计师设计的多种时尚风格</li>
-                        <li>精美的排版和设计，如同高端杂志般的视觉体验</li>
-                        <li>内容将被智能整理成简洁精华的知识点</li>
-                        <li>完全可定制的知识卡片，适合分享和学习</li>
-                        <li>可在社交媒体上分享，展示个人品味和知识深度</li>
-                      </ul>
-                    </div>
-                  </>
-                )}
-                
-                <div className="flex justify-between">
-                  {mode === 'normal' && (
-                    <button
-                      type="button"
-                      className={getButtonClass(false)}
-                      onClick={() => {
-                        const randomStyle = styles[Math.floor(Math.random() * styles.length)].id;
-                        setStyle(randomStyle);
-                      }}
-                    >
-                      <FaRandom className="mr-2 h-4 w-4" />
-                      随机风格
-                    </button>
-                  )}
+                    )}
+                  </div>
                   
-                  {mode === 'magazine' && (
-                    <button
-                      type="button"
-                      className={getButtonClass(false)}
-                      onClick={() => {
-                        // 展示示例主题
-                        setTopic('终身学习与认知成长');
-                      }}
-                    >
-                      <FaLightbulb className="mr-2 h-4 w-4" />
-                      主题示例
-                    </button>
-                  )}
-                  
-                  <button
-                    type="submit"
-                    disabled={loading || (mode === 'normal' ? !prompt.trim() : !topic.trim())}
-                    className={getButtonClass(true) + " disabled:opacity-50"}
-                  >
-                    <FaPalette className="mr-2 h-4 w-4" />
-                    {loading ? '生成中...' : mode === 'normal' ? '生成艺术卡片' : '生成杂志卡片'}
-                  </button>
-                </div>
-              </form>
-              
-              {loading && (
-                <div className="mt-8 flex flex-col items-center justify-center">
-                  <div className={`animate-spin rounded-full h-12 w-12 border-b-2 border-${accent}-600`}></div>
-                  <p className="mt-4 text-sm text-gray-500">
-                    {mode === 'normal' ? '正在生成您的艺术卡片...' : '正在创建您的杂志风格卡片...'}
-                  </p>
-                </div>
-              )}
-              
-              {/* 普通艺术卡片结果 */}
-              {result && mode === 'normal' && (
-                <div className="mt-10 border-t border-gray-200 pt-10">
-                  <h3 className="text-lg font-medium text-gray-900 mb-6 flex items-center">
-                    <FaImage className={`mr-2 h-5 w-5 text-${accent}-600`} />
-                    生成结果
-                  </h3>
-                  <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-                    <div className="relative group">
-                      <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
-                        <img 
-                          src={result.url} 
-                          alt="生成的艺术卡片"
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                      </div>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
-                        <div className="p-4 w-full">
-                          <div className="flex justify-end space-x-2">
-                            <button className="p-2 bg-white/90 rounded-full text-gray-700 hover:bg-white transition-colors">
-                              <FaImage className="h-4 w-4" />
-                            </button>
-                            <button className="p-2 bg-white/90 rounded-full text-gray-700 hover:bg-white transition-colors">
-                              <FaDownload className="h-4 w-4" />
-                            </button>
-                            <button className="p-2 bg-white/90 rounded-full text-gray-700 hover:bg-white transition-colors">
-                              <FaShareAlt className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="p-6 bg-white">
-                      <div className="space-y-4">
+                  <div className="bg-gray-50 px-6 py-4">
+                    <div className="text-sm text-gray-500">
+                      {mode === 'magazine' ? (
                         <div>
-                          <h4 className="text-xs uppercase tracking-wider text-gray-500 font-medium mb-1">提示词</h4>
-                          <p className="text-gray-700">{result.prompt}</p>
+                          <p><span className="font-medium">主题:</span> {result.topic}</p>
+                          <p><span className="font-medium">风格:</span> {magazineStyles.find(s => s.id === result.style)?.name || result.style}</p>
                         </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <h4 className="text-xs uppercase tracking-wider text-gray-500 font-medium mb-1">风格</h4>
-                            <div className="flex items-center">
-                              <span className={`inline-block w-3 h-3 rounded-full bg-${accent}-500 mr-2`}></span>
-                              <span className="text-gray-700">{styles.find(s => s.id === result.style)?.name}</span>
-                            </div>
-                          </div>
-                          
-                          <div>
-                            <h4 className="text-xs uppercase tracking-wider text-gray-500 font-medium mb-1">比例</h4>
-                            <div className="flex items-center">
-                              <span className="inline-block w-4 h-3 border border-gray-400 mr-2"></span>
-                              <span className="text-gray-700">{ratios.find(r => r.id === result.ratio)?.name}</span>
-                            </div>
-                          </div>
+                      ) : (
+                        <div>
+                          <p><span className="font-medium">提示词:</span> {result.prompt}</p>
+                          <p><span className="font-medium">风格:</span> {styles.find(s => s.id === result.style)?.name || result.style}</p>
+                          <p><span className="font-medium">比例:</span> {result.ratio}</p>
                         </div>
-                      </div>
-                      
-                      <div className="mt-6 flex justify-between items-center">
-                        <button 
-                          className={`inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm rounded-lg font-medium bg-white hover:bg-gray-50 text-gray-700 transition-colors`}
-                          onClick={() => {
-                            // 保存为模板
-                          }}
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl shadow-sm p-6 h-full flex flex-col items-center justify-center text-center">
+                  <div className="bg-gray-100 rounded-full p-6 mb-4 inline-block">
+                    <FaImage className="h-12 w-12 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">创建国际顶级杂志风格卡片</h3>
+                  <p className="text-gray-500 max-w-md mb-4">
+                    选择一种杂志风格，输入你想要的主题，AI将为你生成精美的杂志卡片，如同国际顶尖杂志般的视觉体验。
+                  </p>
+                  <div className="max-w-md">
+                    <div className="grid grid-cols-4 gap-2">
+                      {['minimalist', 'bold-modern', 'elegant-vintage', 'art-nouveau'].map((styleId) => (
+                        <div 
+                          key={styleId}
+                          className="aspect-square rounded-md border border-gray-200 flex items-center justify-center cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-all"
+                          onClick={() => setMagStyle(styleId)}
                         >
-                          <FaBookmark className="mr-1.5 h-3.5 w-3.5" />
-                          保存为模板
-                        </button>
-                        
-                        <div className="flex space-x-2">
-                          <button className={`inline-flex items-center px-3.5 py-2 text-sm rounded-lg font-medium text-white bg-${accent}-600 hover:bg-${accent}-700 transition-colors shadow-sm`}>
-                            <FaDownload className="mr-1.5 h-3.5 w-3.5" />
-                            下载
-                          </button>
-                          <button className={`inline-flex items-center px-3.5 py-2 text-sm rounded-lg font-medium text-white bg-${accent}-600 hover:bg-${accent}-700 transition-colors shadow-sm`}>
-                            重新生成
-                          </button>
+                          <div className="text-center p-2">
+                            <div className={`w-6 h-6 mx-auto rounded-full ${
+                              styleId === 'minimalist' ? 'bg-gray-200' :
+                              styleId === 'bold-modern' ? 'bg-purple-400' :
+                              styleId === 'elegant-vintage' ? 'bg-amber-200' :
+                              'bg-pink-200'
+                            }`}></div>
+                            <p className="text-xs mt-1 font-medium text-gray-700">
+                              {styleId === 'minimalist' ? '极简' :
+                               styleId === 'bold-modern' ? '现代' :
+                               styleId === 'elegant-vintage' ? '复古' :
+                               '艺术'}
+                            </p>
+                          </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
                   </div>
                 </div>
               )}
-              
-              {/* 杂志卡片结果 */}
-              {result && mode === 'magazine' && (
-                <div className="mt-10 border-t border-gray-200 pt-10">
-                  <h3 className="text-lg font-medium text-gray-900 mb-6 flex items-center">
-                    <FaPalette className={`mr-2 h-5 w-5 text-${accent}-600`} />
-                    杂志卡片预览
-                  </h3>
-                  
-                  <div className="flex flex-col lg:flex-row gap-8">
-                    <div className="lg:w-1/2 order-2 lg:order-1">
-                      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                        <h4 className="text-sm font-medium text-gray-700 mb-4">卡片详情</h4>
-                        
-                        <div className="space-y-4">
-                          <div>
-                            <h5 className="text-xs uppercase tracking-wider text-gray-500 font-medium mb-1">主题</h5>
-                            <p className="text-gray-700">{result.topic}</p>
-                          </div>
-                          
-                          <div>
-                            <h5 className="text-xs uppercase tracking-wider text-gray-500 font-medium mb-1">风格</h5>
-                            <div className="flex items-center">
-                              <span className={`inline-block w-3 h-3 rounded-full bg-${accent}-500 mr-2`}></span>
-                              <span className="text-gray-700">
-                                {result.style ? magazineStyles.find(s => s.id === result.style)?.name : '随机生成风格'}
-                              </span>
-                            </div>
-                          </div>
-                          
-                          <div>
-                            <h5 className="text-xs uppercase tracking-wider text-gray-500 font-medium mb-1">创建日期</h5>
-                            <p className="text-gray-700">2025-03-23</p>
-                          </div>
-                        </div>
-                        
-                        <div className="mt-6 space-y-3">
-                          <button className={`w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm rounded-lg font-medium bg-white hover:bg-gray-50 text-gray-700 transition-colors`}>
-                            <FaBookmark className="mr-1.5 h-3.5 w-3.5" />
-                            保存为模板
-                          </button>
-                          
-                          <button className={`w-full inline-flex justify-center items-center px-4 py-2 text-sm rounded-lg font-medium text-white bg-${accent}-600 hover:bg-${accent}-700 transition-colors shadow-sm`}>
-                            <FaDownload className="mr-1.5 h-3.5 w-3.5" />
-                            导出为图片
-                          </button>
-                          
-                          <button className={`w-full inline-flex justify-center items-center px-4 py-2 text-sm rounded-lg font-medium text-${accent}-600 bg-${accent}-50 hover:bg-${accent}-100 transition-colors`}>
-                            <FaHistory className="mr-1.5 h-3.5 w-3.5" />
-                            重新生成
-                          </button>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                        <h4 className="text-sm font-medium text-gray-700 mb-4 flex items-center">
-                          <FaShareAlt className="mr-1.5 h-3.5 w-3.5 text-gray-500" />
-                          分享与导出
-                        </h4>
-                        
-                        <div className="grid grid-cols-3 gap-3">
-                          <button className="flex flex-col items-center justify-center p-3 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors">
-                            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mb-2">
-                              <i className="fab fa-weixin text-lg"></i>
-                            </div>
-                            <span className="text-xs text-gray-700">微信</span>
-                          </button>
-                          
-                          <button className="flex flex-col items-center justify-center p-3 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors">
-                            <div className="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center text-red-600 mb-2">
-                              <i className="fab fa-weibo text-lg"></i>
-                            </div>
-                            <span className="text-xs text-gray-700">微博</span>
-                          </button>
-                          
-                          <button className="flex flex-col items-center justify-center p-3 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors">
-                            <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 mb-2">
-                              <i className="fas fa-link text-lg"></i>
-                            </div>
-                            <span className="text-xs text-gray-700">复制链接</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="lg:w-1/2 order-1 lg:order-2">
-                      <div className="rounded-xl border border-gray-200 shadow-sm overflow-hidden bg-white">
-                        <div className="h-[600px] overflow-auto p-2">
-                          <iframe 
-                            srcDoc={result.html} 
-                            title="Magazine Card Preview" 
-                            className="w-full h-full border-0" 
-                            sandbox="allow-same-origin"
-                          ></iframe>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              <div className="mt-10">
-                <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                  <FaLightbulb className={`mr-2 h-5 w-5 text-${accent}-600`} />
-                  创作提示
-                </h3>
-                
-                <div className={`bg-${accent}-50 rounded-xl p-6`}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <h4 className="text-sm font-semibold text-gray-700 mb-3">提高生成质量的建议</h4>
-                      <ul className={`space-y-2 text-sm text-gray-600 pl-5`}>
-                        <li className="flex items-start">
-                          <span className={`inline-block w-1.5 h-1.5 rounded-full bg-${accent}-500 mt-1.5 mr-2 flex-shrink-0`}></span>
-                          描述越详细，生成的结果越接近您的想象
-                        </li>
-                        <li className="flex items-start">
-                          <span className={`inline-block w-1.5 h-1.5 rounded-full bg-${accent}-500 mt-1.5 mr-2 flex-shrink-0`}></span>
-                          提及光线、构图和情绪可以获得更好的结果
-                        </li>
-                        <li className="flex items-start">
-                          <span className={`inline-block w-1.5 h-1.5 rounded-full bg-${accent}-500 mt-1.5 mr-2 flex-shrink-0`}></span>
-                          尝试不同的艺术风格，发现新的创意可能
-                        </li>
-                        <li className="flex items-start">
-                          <span className={`inline-block w-1.5 h-1.5 rounded-full bg-${accent}-500 mt-1.5 mr-2 flex-shrink-0`}></span>
-                          使用专业术语可以更精确地描述您想要的效果
-                        </li>
-                      </ul>
-                    </div>
-                    
-                    <div>
-                      <h4 className="text-sm font-semibold text-gray-700 mb-3">使用示例</h4>
-                      <div className="bg-white rounded-lg p-3 border border-gray-200 text-sm text-gray-600">
-                        <p className="mb-2"><span className="font-medium">风景示例:</span> "黄昏时分的海滩，温暖的阳光洒在细腻的沙滩上，远处有棕榈树剪影，天空呈现渐变的橙红色和紫色，水彩风格"</p>
-                        <p><span className="font-medium">肖像示例:</span> "一位戴着花冠的年轻女子侧脸特写，柔和的自然光线，背景是模糊的森林，油画风格，色调温暖"</p>
-                      </div>
-                      
-                      <div className="mt-4 flex items-center justify-between text-xs text-gray-500 px-1">
-                        <span>每次生成消耗 {mode === 'normal' ? '10' : '15'} 积分</span>
-                        <Link href="/help/credits" className={`text-${accent}-600 hover:underline`}>查看积分说明</Link>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
-        </div>
-      </main>
+        )}
+      </div>
     </div>
   );
 }

@@ -293,8 +293,8 @@ export default function Dashboard() {
                           <FaPalette className="h-6 w-6 text-indigo-600" />
                         </div>
                         <div className="ml-4">
-                          <h3 className="text-lg font-semibold text-gray-900">艺术卡片</h3>
-                          <p className="text-sm text-gray-500">通过Anthropic API生成艺术卡片</p>
+                          <h3 className="text-lg font-semibold text-gray-900">杂志艺术卡片</h3>
+                          <p className="text-sm text-gray-500">生成精美杂志风格HTML卡片</p>
                         </div>
                       </div>
                       <div className="mt-6 border-t border-gray-100 pt-4">
