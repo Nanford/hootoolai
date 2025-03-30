@@ -73,6 +73,33 @@ export default function Chat() {
     }
   }, [provider, availableModels]);
 
+  // 尝试从localStorage恢复会话状态
+  useEffect(() => {
+    try {
+      // 恢复选择的提供商和模型
+      const savedProvider = localStorage.getItem('selectedProvider');
+      const savedModel = localStorage.getItem('selectedModel');
+      const savedEnterToSend = localStorage.getItem('enterToSend');
+      
+      if (savedProvider) setProvider(savedProvider);
+      if (savedModel) setSelectedModel(savedModel);
+      if (savedEnterToSend !== null) setEnterToSend(savedEnterToSend === 'true');
+    } catch (e) {
+      console.error('恢复会话状态失败:', e);
+    }
+  }, []);
+
+  // 保存会话状态到localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('selectedProvider', provider);
+      localStorage.setItem('selectedModel', selectedModel);
+      localStorage.setItem('enterToSend', enterToSend.toString());
+    } catch (e) {
+      console.error('保存会话状态失败:', e);
+    }
+  }, [provider, selectedModel, enterToSend]);
+
   // 加载聊天历史
   const loadChatHistory = async () => {
     try {
@@ -82,7 +109,7 @@ export default function Chat() {
       if (!user || !user.id) {
         console.log('用户未登录或user.id不存在，创建新聊天');
         setUseMockData(true);
-        createNewChat();
+        loadMockChatHistory();
         setLoading(false);
         return;
       }
@@ -113,14 +140,16 @@ export default function Chat() {
         
         // 处理返回的数据
         if (data && data.length > 0) {
+          // 确保每个聊天都有有效的title和lastMessage
           const formattedHistory = data.map(chat => ({
             id: chat.id,
-            title: chat.title || '新的对话',
+            title: chat.title || '',
             lastMessage: chat.last_message || '',
             date: chat.updated_at ? new Date(chat.updated_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
             messages: chat.messages || []
           }));
           
+          console.log('从数据库加载了', formattedHistory.length, '条聊天记录');
           setChatHistory(formattedHistory);
           
           // 选择最近的一个聊天
@@ -149,7 +178,7 @@ export default function Chat() {
       console.error('处理聊天历史时出错:', error);
       // 出错时创建新聊天
       setUseMockData(true);
-      createNewChat();
+      loadMockChatHistory();
     } finally {
       setLoading(false);
     }
@@ -163,31 +192,65 @@ export default function Chat() {
     try {
       const savedHistory = localStorage.getItem('chatHistory');
       if (savedHistory) {
-        const parsedHistory = JSON.parse(savedHistory);
-        setChatHistory(parsedHistory);
-        
-        if (parsedHistory.length > 0) {
-          setCurrentChatId(parsedHistory[0].id);
-          const firstChat = parsedHistory[0];
-          setMessages(firstChat.messages && firstChat.messages.length > 0 
-            ? firstChat.messages 
-            : [{
+        try {
+          const parsedHistory = JSON.parse(savedHistory);
+          
+          // 确保数据是数组格式
+          if (Array.isArray(parsedHistory) && parsedHistory.length > 0) {
+            console.log('成功从localStorage加载了', parsedHistory.length, '条聊天记录');
+            
+            // 输出所有聊天的标题，用于调试
+            parsedHistory.forEach((chat, index) => {
+              console.log(`聊天${index + 1}的标题: "${chat.title || '(空)'}", ID: ${chat.id}`);
+            });
+            
+            setChatHistory(parsedHistory);
+            
+            // 选择第一个聊天
+            setCurrentChatId(parsedHistory[0].id);
+            const firstChat = parsedHistory[0];
+            
+            // 如果有消息，加载消息
+            if (firstChat.messages && firstChat.messages.length > 0) {
+              console.log('加载聊天消息:', firstChat.messages.length, '条');
+              setMessages(firstChat.messages);
+            } else {
+              // 否则创建初始消息
+              const initialMessage = {
                 id: 1,
                 role: 'assistant',
                 content: '你好！我是HooTool AI助手，有什么可以帮到你的吗？',
                 timestamp: new Date(),
                 model: selectedModel,
                 provider: provider
-              }]
-          );
-          return;
+              };
+              setMessages([initialMessage]);
+              
+              // 更新聊天历史中的消息
+              const updatedHistory = parsedHistory.map(chat => 
+                chat.id === firstChat.id ? {...chat, messages: [initialMessage]} : chat
+              );
+              setChatHistory(updatedHistory);
+              localStorage.setItem('chatHistory', JSON.stringify(updatedHistory));
+            }
+            return;
+          } else {
+            console.warn('localStorage中的聊天历史格式不是数组或为空');
+          }
+        } catch (parseError) {
+          console.error('解析localStorage中的聊天历史失败:', parseError);
+          // 清除可能损坏的数据
+          localStorage.removeItem('chatHistory');
         }
+      } else {
+        console.log('localStorage中没有找到聊天历史');
       }
     } catch (e) {
       console.error('从localStorage加载聊天历史失败:', e);
     }
     
     // 如果没有保存的历史或解析失败，创建模拟数据
+    console.log('创建新的模拟聊天历史');
     const mockHistory = [
       { id: 'chat-1', title: '工作效率提升策略', lastMessage: '谢谢你的建议，我会尝试这些方法', date: new Date().toISOString().split('T')[0], messages: [] },
       { id: 'chat-2', title: '写作技巧指导', lastMessage: '这些写作技巧非常有用，感谢分享', date: new Date().toISOString().split('T')[0], messages: [] },
@@ -206,7 +269,12 @@ export default function Chat() {
     }]);
     
     // 保存到localStorage
-    localStorage.setItem('chatHistory', JSON.stringify(mockHistory));
+    try {
+      localStorage.setItem('chatHistory', JSON.stringify(mockHistory));
+      console.log('成功保存模拟聊天历史到localStorage');
+    } catch (saveError) {
+      console.error('保存模拟聊天历史到localStorage失败:', saveError);
+    }
   };
 
   // 创建新的聊天
@@ -225,10 +293,10 @@ export default function Chat() {
         provider: provider
       };
       
-      // 在本地状态添加新聊天
+      // 不再使用标题，初始lastMessage为空
       const newChat = {
         id: newChatId,
-        title: '新的对话',
+        title: '',
         lastMessage: '',
         date: now.split('T')[0],
         messages: [initialMessage]
@@ -242,7 +310,7 @@ export default function Chat() {
             .insert({
               id: newChatId,
               user_id: user.id,
-              title: '新的对话',
+              title: '',
               last_message: '',
               messages: [initialMessage],
               created_at: now,
@@ -264,21 +332,26 @@ export default function Chat() {
       }
       
       // 更新本地状态
-      setChatHistory(prev => [newChat, ...prev]);
+      const updatedHistory = [newChat, ...(chatHistory || [])];
+      setChatHistory(updatedHistory);
       setCurrentChatId(newChatId);
       setMessages([initialMessage]);
       
       // 如果是模拟模式，保存到localStorage
       if (useMockData) {
-        const updatedHistory = [newChat, ...chatHistory];
-        localStorage.setItem('chatHistory', JSON.stringify(updatedHistory));
+        try {
+          localStorage.setItem('chatHistory', JSON.stringify(updatedHistory));
+          console.log('新聊天已保存到localStorage, 聊天ID:', newChatId);
+        } catch (saveError) {
+          console.error('保存新聊天到localStorage失败:', saveError);
+        }
       }
     } catch (error) {
       console.error('创建新聊天时出错:', error);
       // 即使出错，也确保UI可用
       const fallbackChat = {
         id: `fallback-${Date.now()}`,
-        title: '新的对话',
+        title: '',
         lastMessage: '',
         date: new Date().toISOString().split('T')[0],
         messages: [{
@@ -291,14 +364,19 @@ export default function Chat() {
         }]
       };
       
-      setChatHistory(prev => [fallbackChat, ...prev]);
+      const updatedHistory = [fallbackChat, ...(chatHistory || [])];
+      setChatHistory(updatedHistory);
       setCurrentChatId(fallbackChat.id);
       setMessages([fallbackChat.messages[0]]);
       
       // 模拟模式下保存到localStorage
       if (useMockData) {
-        const updatedHistory = [fallbackChat, ...chatHistory];
-        localStorage.setItem('chatHistory', JSON.stringify(updatedHistory));
+        try {
+          localStorage.setItem('chatHistory', JSON.stringify(updatedHistory));
+          console.log('后备聊天已保存到localStorage');
+        } catch (saveError) {
+          console.error('保存后备聊天到localStorage失败:', saveError);
+        }
       }
     }
   };
@@ -350,69 +428,17 @@ export default function Chat() {
         
         // 如果是模拟模式，保存到localStorage
         if (useMockData) {
-          localStorage.setItem('chatHistory', JSON.stringify(updatedChatHistory));
+          try {
+            localStorage.setItem('chatHistory', JSON.stringify(updatedChatHistory));
+            console.log('已更新聊天消息并保存到localStorage');
+          } catch (saveError) {
+            console.error('保存聊天消息到localStorage失败:', saveError);
+          }
         }
       }
     }
     
     setShowChatOptions(false);
-  };
-
-  // 根据最新消息更新聊天标题
-  const updateChatTitle = async (chatId, userMessage) => {
-    try {
-      // 使用API生成标题
-      const chatMessages = [...messages, { role: 'user', content: userMessage }];
-      const title = await generateChatTitle(chatMessages);
-      
-      // 更新本地状态
-      setChatHistory(prev => prev.map(chat => 
-        chat.id === chatId ? { ...chat, title, lastMessage: userMessage } : chat
-      ));
-      
-      // 更新数据库中的记录
-      if (!useMockData && user && user.id) {
-        try {
-          await supabase
-            .from('chat_history')
-            .update({ 
-              title,
-              last_message: userMessage,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', chatId);
-        } catch (dbError) {
-          console.error('更新标题到数据库时出错:', dbError);
-        }
-      }
-    } catch (error) {
-      console.error('更新标题时出错:', error);
-      // 回退到简单标题生成
-      if (userMessage.length > 20) {
-        const shortTitle = userMessage.substring(0, 20) + '...';
-        
-        // 更新本地状态
-        setChatHistory(prev => prev.map(chat => 
-          chat.id === chatId ? { ...chat, title: shortTitle, lastMessage: userMessage } : chat
-        ));
-        
-        // 更新数据库中的记录
-        if (!useMockData && user && user.id) {
-          try {
-            await supabase
-              .from('chat_history')
-              .update({ 
-                title: shortTitle,
-                last_message: userMessage,
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', chatId);
-          } catch (dbError) {
-            console.error('更新标题到数据库时出错:', dbError);
-          }
-        }
-      }
-    }
   };
 
   const scrollToBottom = () => {
@@ -430,32 +456,29 @@ export default function Chat() {
     
     // 添加用户消息
     const userMessage = { role: 'user', content: input.trim(), timestamp: new Date() };
-    setMessages(prev => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     
     // 更新聊天历史中的最后一条消息
     if (currentChatId) {
-      // 更新本地状态
+      // 更新本地状态 - 直接使用用户输入作为lastMessage
       const updatedChatHistory = chatHistory.map(chat => 
         chat.id === currentChatId ? { ...chat, lastMessage: input.trim() } : chat
       );
       setChatHistory(updatedChatHistory);
       
-      // 如果是新聊天的第一条消息，更新标题
-      const currentChat = chatHistory.find(c => c.id === currentChatId);
-      if (currentChat && currentChat.title === '新的对话') {
-        updateChatTitle(currentChatId, input.trim());
-      } else {
-        // 如果是模拟模式，保存到localStorage
-        if (useMockData) {
-          localStorage.setItem('chatHistory', JSON.stringify(updatedChatHistory));
-        }
+      // 保存聊天历史到localStorage (无论是否模拟模式都保存，增加可靠性)
+      try {
+        localStorage.setItem('chatHistory', JSON.stringify(updatedChatHistory));
+        console.log('已更新聊天历史lastMessage：', input.trim().substring(0, 20));
+      } catch (saveError) {
+        console.error('保存聊天历史到localStorage失败:', saveError);
       }
       
       // 如果不是模拟模式且用户已登录，尝试更新数据库
       if (!useMockData && user && user.id) {
         try {
-          // 更新数据库中的记录
-          const updatedMessages = [...messages, userMessage];
+          // 更新数据库中的记录 - 只更新lastMessage而不更新title
           await supabase
             .from('chat_history')
             .update({ 
@@ -544,9 +567,12 @@ export default function Chat() {
       });
       setChatHistory(updatedChatHistory);
       
-      // 如果是模拟模式，保存到localStorage
-      if (useMockData) {
+      // 保存聊天历史到localStorage (无论是否模拟模式都保存，增加可靠性)
+      try {
         localStorage.setItem('chatHistory', JSON.stringify(updatedChatHistory));
+        console.log('已更新聊天历史并保存到localStorage');
+      } catch (saveError) {
+        console.error('保存聊天历史到localStorage失败:', saveError);
       }
       
       // 如果不是模拟模式且用户已登录，尝试更新数据库
@@ -557,6 +583,7 @@ export default function Chat() {
             .from('chat_history')
             .update({ 
               messages: updatedAllMessages,
+              last_message: input.trim(),
               updated_at: new Date().toISOString()
             })
             .eq('id', currentChatId);
@@ -595,9 +622,11 @@ export default function Chat() {
       });
       setChatHistory(updatedChatHistory);
       
-      // 如果是模拟模式，保存到localStorage
-      if (useMockData) {
+      // 保存聊天历史到localStorage (无论是否模拟模式都保存，增加可靠性)
+      try {
         localStorage.setItem('chatHistory', JSON.stringify(updatedChatHistory));
+      } catch (saveError) {
+        console.error('保存错误消息到localStorage失败:', saveError);
       }
       
       // 如果不是模拟模式且用户已登录，尝试更新数据库
@@ -608,6 +637,7 @@ export default function Chat() {
             .from('chat_history')
             .update({ 
               messages: updatedAllMessages,
+              last_message: input.trim(),
               updated_at: new Date().toISOString()
             })
             .eq('id', currentChatId);
@@ -675,9 +705,12 @@ export default function Chat() {
       const newChatHistory = chatHistory.filter(chat => chat.id !== currentChatId);
       setChatHistory(newChatHistory);
       
-      // 如果是模拟模式，更新localStorage
-      if (useMockData) {
+      // 无论是否模拟模式，都更新localStorage
+      try {
         localStorage.setItem('chatHistory', JSON.stringify(newChatHistory));
+        console.log('删除的聊天已从localStorage中移除');
+      } catch (saveError) {
+        console.error('从localStorage删除聊天失败:', saveError);
       }
       
       // 如果不是模拟模式且用户已登录，从数据库中删除
@@ -772,6 +805,27 @@ export default function Chat() {
         }
       }
     }
+  };
+
+  // 渲染聊天标题，如果没有用户消息就显示"新的对话"，否则显示用户第一条消息内容
+  const renderChatTitle = (chat) => {
+    // 如果没有聊天对象，返回空字符串
+    if (!chat) return "";
+    
+    // 如果聊天有标题，返回标题
+    if (chat.title && chat.title !== '') {
+      return chat.title;
+    }
+    
+    // 如果聊天没有标题但有lastMessage，使用lastMessage
+    if (chat.lastMessage && chat.lastMessage !== '') {
+      return chat.lastMessage.length > 20 
+        ? chat.lastMessage.substring(0, 20) + '...' 
+        : chat.lastMessage;
+    }
+    
+    // 如果什么都没有，这是个新对话
+    return "新的对话";
   };
 
   if (loading) {
@@ -869,7 +923,7 @@ export default function Chat() {
                       >
                         <div className="flex items-start justify-between">
                           <p className={`text-sm font-medium ${currentChatId === chat.id ? 'text-green-900' : 'text-gray-900'} truncate max-w-[100px]`}>
-                            {chat.title}
+                            {renderChatTitle(chat)}
                           </p>
                           <span className="text-xs text-gray-500 whitespace-nowrap ml-1">
                             {formatDate(chat.date)}
@@ -973,7 +1027,7 @@ export default function Chat() {
                         >
                           <div className="flex items-start justify-between">
                             <p className="text-sm font-medium text-gray-900 truncate max-w-[100px]">
-                              {chat.title}
+                              {renderChatTitle(chat)}
                             </p>
                             <span className="text-xs text-gray-500 whitespace-nowrap ml-1">
                               {formatDate(chat.date)}
@@ -1032,7 +1086,7 @@ export default function Chat() {
               </div>
               <div>
                 <h2 className="text-sm font-medium text-gray-900">
-                  {chatHistory.find(c => c.id === currentChatId)?.title || '新的对话'}
+                  {renderChatTitle(chatHistory.find(c => c.id === currentChatId))}
                 </h2>
                 <p className="text-xs text-gray-500 relative">
                   AI助手 - 基于{provider === 'deepseek' ? 'DeepSeek' : 'OpenAI'} 
