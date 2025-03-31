@@ -108,7 +108,7 @@ export default function Chat() {
       // 确保user不为null
       if (!user || !user.id) {
         console.log('用户未登录或user.id不存在，创建新聊天');
-        setUseMockData(true);
+        //setUseMockData(true);
         loadMockChatHistory();
         setLoading(false);
         return;
@@ -496,6 +496,47 @@ export default function Chat() {
     }
     
     setInput('');
+    // 积分扣除API调用 - 在每次聊天前单独调用一次积分扣除API
+    if (user && user.id && !useMockData) {
+      try {
+        console.log('正在调用积分扣除API...');
+        
+        // 获取认证令牌
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        
+        if (!token) {
+          console.error('无法获取认证令牌');
+          return;
+        }
+        
+        const deductResponse = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            messages: [{ role: 'user', content: input.trim() }],
+            deductOnly: true  // 只扣除积分不执行对话
+          })
+        });
+        
+        if (!deductResponse.ok) {
+          const errorData = await deductResponse.json();
+          console.error('积分扣除失败:', errorData);
+          if (errorData.error === '积分不足') {
+            alert('您的积分不足，请充值后再使用聊天功能');
+            return; // 积分不足时直接返回，不继续执行
+          }
+        } else {
+          console.log('积分扣除成功');
+        }
+      } catch (error) {
+        console.error('调用积分扣除API出错:', error);
+        // 继续执行，避免因积分扣除失败而影响聊天功能
+      }
+    }
     setSending(true);
     setStreamingContent('');
     setThinking('');
@@ -1163,7 +1204,7 @@ export default function Chat() {
                             <span className="text-xs font-medium text-gray-700">AI提供商</span>
                           </div>
                           <div className="flex space-x-2">
-                            <button
+                  <button 
                               onClick={() => setProvider('deepseek')}
                               className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center ${
                                 provider === 'deepseek' 
@@ -1210,7 +1251,7 @@ export default function Chat() {
                               >
                                 <div className="font-medium">{model.name}</div>
                                 <div className="text-gray-500 text-xs mt-0.5">{model.description}</div>
-                              </button>
+                  </button>
                             ))}
                           </div>
                         </div>

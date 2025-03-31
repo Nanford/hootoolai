@@ -9,12 +9,16 @@ import {
   FaRegBell, FaRegStar, FaMagic, FaRocket
 } from 'react-icons/fa';
 import { supabase } from '../../utils/supabase';
+import { getUserCredits } from '../../utils/credits';
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('tools');
-  const [creditUsage, setCreditUsage] = useState(0);
+  const [credits, setCredits] = useState(0);
+  const [maxCredits, setMaxCredits] = useState(100); // 默认免费用户每月100积分
+  const [loadingCredits, setLoadingCredits] = useState(true);
+  const [userPlan, setUserPlan] = useState('free'); // 默认为免费用户
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef(null);
   const router = useRouter();
@@ -30,13 +34,57 @@ export default function Dashboard() {
       }
       
       setUser(session.user);
-      // 模拟获取用户数据
-      setCreditUsage(35); // 假设用户已使用35%的积分
+      
+      // 设置用户类型和最大积分上限
+      const userMetadata = session.user.user_metadata || {};
+      const plan = userMetadata.plan || 'free';
+      setUserPlan(plan);
+      
+      // 根据计划设置积分上限
+      if (plan === 'basic') {
+        setMaxCredits(500);
+      } else if (plan === 'pro') {
+        setMaxCredits(2000);
+      } else {
+        setMaxCredits(100); // 免费用户
+      }
+      
       setLoading(false);
+      
+      // 获取用户积分
+      if (session.user.id) {
+        await fetchUserCredits(session.user.id);
+      }
     };
 
     checkUser();
   }, [router]);
+  
+  // 获取用户积分
+  const fetchUserCredits = async (userId) => {
+    setLoadingCredits(true);
+    try {
+      if (!userId) {
+        console.error('缺少用户ID');
+        setLoadingCredits(false);
+        return;
+      }
+      
+      // 添加userId作为查询参数
+      const response = await fetch(`/api/credits?userId=${userId}`);
+      const data = await response.json();
+      
+      if (response.ok) {
+        setCredits(data.credits);
+      } else {
+        console.error('获取积分失败:', data.error);
+      }
+    } catch (error) {
+      console.error('获取积分出错:', error);
+    } finally {
+      setLoadingCredits(false);
+    }
+  };
 
   useEffect(() => {
     // 点击页面其他区域时关闭用户菜单
@@ -69,6 +117,13 @@ export default function Dashboard() {
     }
   };
 
+  // 计算积分使用百分比
+  const calculateCreditUsagePercentage = () => {
+    if (maxCredits <= 0) return 0;
+    const usedCredits = maxCredits - credits;
+    return Math.round((usedCredits / maxCredits) * 100);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -96,6 +151,9 @@ export default function Dashboard() {
     { id: 2, title: '小红书爆款封面设计指南', type: '指南', date: '2023-06-15' },
     { id: 3, title: '图片处理常见问题', type: 'FAQ', date: '2023-07-10' },
   ];
+  
+  // 获取积分使用百分比
+  const creditUsagePercentage = calculateCreditUsagePercentage();
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -153,7 +211,7 @@ export default function Dashboard() {
                       </div>
                     )}
                   </div>
-                  <div className="text-xs text-gray-500">免费用户</div>
+                  <div className="text-xs text-gray-500">{userPlan === 'free' ? '免费用户' : (userPlan === 'basic' ? '基础会员' : (userPlan === 'pro' ? '专业会员' : '企业会员'))}</div>
                 </div>
               </div>
             </div>
@@ -181,16 +239,21 @@ export default function Dashboard() {
                     <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 text-white">
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-medium">剩余积分</span>
-                        <span className="font-bold">65 / 100</span>
+                        <span className="font-bold">
+                          {loadingCredits ? 
+                            <div className="animate-pulse h-6 w-20 bg-white/10 rounded"></div> : 
+                            `${credits} / ${maxCredits}`
+                          }
+                        </span>
                       </div>
                       <div className="w-full bg-white/20 rounded-full h-2">
                         <div 
                           className="bg-white rounded-full h-2" 
-                          style={{ width: `${100 - creditUsage}%` }}
+                          style={{ width: `${100 - creditUsagePercentage}%` }}
                         ></div>
                       </div>
                       <div className="mt-2 text-xs text-blue-100 flex justify-between">
-                        <span>本月已使用: {creditUsage}%</span>
+                        <span>本月已使用: {creditUsagePercentage}%</span>
                         <Link href="/pricing" className="text-white underline hover:no-underline">
                           升级账户
                         </Link>
@@ -273,7 +336,7 @@ export default function Dashboard() {
                       <div className="mt-6 border-t border-gray-100 pt-4">
                         <div className="flex items-center justify-between">
                           <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-600">
-                            消耗1-5积分/张
+                            消耗10积分/张
                           </span>
                           <span className="inline-flex items-center text-sm font-medium text-blue-600 group-hover:translate-x-1 transition-transform">
                             开始使用 <FaRocket className="ml-1 h-3 w-3" />
@@ -300,7 +363,7 @@ export default function Dashboard() {
                       <div className="mt-6 border-t border-gray-100 pt-4">
                         <div className="flex items-center justify-between">
                           <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600">
-                            消耗5积分/张
+                            消耗25积分/张
                           </span>
                           <span className="inline-flex items-center text-sm font-medium text-indigo-600 group-hover:translate-x-1 transition-transform">
                             开始使用 <FaRocket className="ml-1 h-3 w-3" />
@@ -327,7 +390,7 @@ export default function Dashboard() {
                       <div className="mt-6 border-t border-gray-100 pt-4">
                         <div className="flex items-center justify-between">
                           <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-50 text-orange-600">
-                            消耗8积分/张
+                            消耗25积分/张
                           </span>
                           <span className="inline-flex items-center text-sm font-medium text-orange-500 group-hover:translate-x-1 transition-transform">
                             开始使用 <FaRocket className="ml-1 h-3 w-3" />
@@ -513,7 +576,7 @@ export default function Dashboard() {
                     <dt className="text-sm font-medium text-gray-500">账户类型</dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                       <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                        免费用户
+                        {userPlan === 'free' ? '免费用户' : (userPlan === 'basic' ? '基础会员' : (userPlan === 'pro' ? '专业会员' : '企业会员'))}
                       </span>
                       <Link href="/pricing" className="ml-3 text-sm text-blue-600 hover:text-blue-500">
                         升级账户
@@ -524,11 +587,16 @@ export default function Dashboard() {
                     <dt className="text-sm font-medium text-gray-500">剩余积分</dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                       <div className="flex items-center">
-                        <span className="font-medium">65 / 100</span>
+                        <span className="font-medium">
+                          {loadingCredits ? 
+                            <div className="animate-pulse h-5 w-20 bg-gray-200 rounded"></div> : 
+                            `${credits} / ${maxCredits}`
+                          }
+                        </span>
                         <div className="ml-4 w-48 bg-gray-200 rounded-full h-2">
                           <div 
                             className="bg-blue-600 rounded-full h-2" 
-                            style={{ width: `${100 - creditUsage}%` }}
+                            style={{ width: `${100 - creditUsagePercentage}%` }}
                           ></div>
                         </div>
                         <Link href="/pricing" className="ml-3 text-sm text-blue-600 hover:text-blue-500">

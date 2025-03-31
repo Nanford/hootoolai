@@ -1,5 +1,7 @@
 // API端点：调用Anthropic API生成艺术卡片HTML
 import { Anthropic } from '@anthropic-ai/sdk';
+import { supabase } from '../../utils/supabase';
+import { deductCredits } from '../../utils/credits';
 
 export default async function handler(req, res) {
   // 设置CORS响应头，允许前端调用这个API
@@ -22,10 +24,35 @@ export default async function handler(req, res) {
   }
 
   try {
+    // 获取当前认证的用户
+    const { data: { session }, error: authError } = await supabase.auth.getSession();
+    
+    if (authError || !session) {
+      return res.status(401).json({ error: '未授权, 请先登录' });
+    }
+
+    const userId = session.user.id;
+    
     const { topic, style } = req.body;
 
     if (!topic || !style) {
       return res.status(400).json({ error: '缺少必要参数' });
+    }
+
+    // 尝试扣除积分
+    try {
+      await deductCredits(userId, 'art_card');
+    } catch (error) {
+      // 如果积分不足，返回错误
+      if (error.message === '积分不足') {
+        return res.status(402).json({ 
+          error: '积分不足',
+          message: '您的积分余额不足以使用艺术卡片生成服务',
+          code: 'INSUFFICIENT_CREDITS'
+        });
+      }
+      
+      throw error; // 其他错误继续抛出
     }
 
     // Anthropic API密钥应从环境变量获取
