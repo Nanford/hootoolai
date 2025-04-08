@@ -329,14 +329,14 @@ export default function Dashboard() {
                           <FaImage className="h-6 w-6 text-blue-600" />
                         </div>
                         <div className="ml-4">
-                          <h3 className="text-lg font-semibold text-gray-900">图片处理</h3>
-                          <p className="text-sm text-gray-500">利用OpenAI技术处理图片</p>
+                          <h3 className="text-lg font-semibold text-gray-900">图像服务</h3>
+                          <p className="text-sm text-gray-500">AI图像生成与修改服务</p>
                         </div>
                       </div>
                       <div className="mt-6 border-t border-gray-100 pt-4">
                         <div className="flex items-center justify-between">
                           <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-600">
-                            消耗10积分/张
+                            生成15积分/修改12积分
                           </span>
                           <span className="inline-flex items-center text-sm font-medium text-blue-600 group-hover:translate-x-1 transition-transform">
                             开始使用 <FaRocket className="ml-1 h-3 w-3" />

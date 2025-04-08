@@ -149,7 +149,8 @@ export async function checkUserCredits(userId, requiredCredits) {
 // 根据服务类型获取所需积分
 export function getRequiredCredits(serviceType) {
   const creditMap = {
-    'image_processing': 10,  // 图片处理
+    'image_generation': 15,  // 图片生成
+    'image_editing': 12,     // 图片修改
     'art_card': 25,          // 艺术卡片
     'cover_generator': 25,   // 公众号和小红书封面
     'chat': 1                // 聊天机器人
@@ -181,7 +182,8 @@ export async function deductCredits(userId, serviceType) {
     console.log('开始更新积分');
     // 生成描述
     const descriptions = {
-      'image_processing': '图片处理',
+      'image_generation': '图片生成',
+      'image_editing': '图片修改',
       'art_card': '艺术卡片生成',
       'cover_generator': '封面生成',
       'chat': '智能聊天'
