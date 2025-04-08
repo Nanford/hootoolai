@@ -149,8 +149,8 @@ export async function checkUserCredits(userId, requiredCredits) {
 // 根据服务类型获取所需积分
 export function getRequiredCredits(serviceType) {
   const creditMap = {
-    'image_generation': 15,  // 图片生成
-    'image_editing': 12,     // 图片修改
+    'image_generation': 5,  // 图片生成，修改为5积分
+    'image_editing': 5,     // 图片修改
     'art_card': 25,          // 艺术卡片
     'cover_generator': 25,   // 公众号和小红书封面
     'chat': 1                // 聊天机器人

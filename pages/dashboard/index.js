@@ -336,7 +336,7 @@ export default function Dashboard() {
                       <div className="mt-6 border-t border-gray-100 pt-4">
                         <div className="flex items-center justify-between">
                           <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-600">
-                            生成15积分/修改12积分
+                            生成5积分/修改12积分
                           </span>
                           <span className="inline-flex items-center text-sm font-medium text-blue-600 group-hover:translate-x-1 transition-transform">
                             开始使用 <FaRocket className="ml-1 h-3 w-3" />

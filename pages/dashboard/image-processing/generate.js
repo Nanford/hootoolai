@@ -128,7 +128,15 @@ export default function ImageGeneration() {
       
     } catch (error) {
       console.error('生成图像错误:', error);
-      alert(`生成失败: ${error.message}`);
+      
+      // 添加更友好的错误提示
+      if (error.message.includes('503') || 
+          error.message.includes('Service Unavailable') || 
+          error.message.includes('overloaded')) {
+        alert('😕 AI绘图引擎暂时过于繁忙，请稍后再试。您不妨修改一下提示词，或者休息一下再来~');
+      } else {
+        alert(`生成失败: ${error.message}`);
+      }
     } finally {
       setGenerating(false);
     }
@@ -235,7 +243,7 @@ export default function ImageGeneration() {
                   ) : (
                     <>
                       <FaMagic className="h-5 w-5 mr-2" />
-                      生成图像 (15积分)
+                      生成图像 (5积分)
                     </>
                   )}
                 </button>
@@ -425,7 +433,7 @@ export default function ImageGeneration() {
                       <li>• 提及光线效果，如"日落时的柔和光线"、"戏剧性照明"等</li>
                       <li>• 如果生成结果不理想，尝试调整提示词并重新生成</li>
                     </ul>
-                    <p className="mt-3 text-xs text-indigo-600">每次生成消耗 15 积分，生成的图像归您所有</p>
+                    <p className="mt-3 text-xs text-indigo-600">每次生成消耗 5 积分，生成的图像归您所有</p>
                   </div>
                 </div>
               </div>

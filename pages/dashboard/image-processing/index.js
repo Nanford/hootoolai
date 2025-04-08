@@ -20,7 +20,7 @@ export default function ImageProcessing() {
       description: '从文本描述生成全新的高质量图像',
       icon: <FaMagic className="h-8 w-8 text-purple-500" />,
       url: '/dashboard/image-processing/generate',
-      cost: '每次 15 积分'
+      cost: '每次 5 积分'
     },
     {
       id: 'editing',
@@ -28,7 +28,7 @@ export default function ImageProcessing() {
       description: '使用文本指令智能修改现有图像',
       icon: <FaPaintBrush className="h-8 w-8 text-blue-500" />,
       url: '/dashboard/image-processing/edit',
-      cost: '每次 12 积分'
+      cost: '每次 5 积分'
     }
   ];
 
