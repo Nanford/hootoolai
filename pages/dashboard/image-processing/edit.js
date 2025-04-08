@@ -363,7 +363,7 @@ export default function ImageEditing() {
                       ) : (
                         <>
                           <FaMagic className="h-5 w-5 mr-2" />
-                          开始修改 (12积分)
+                          开始修改 (5积分)
                         </>
                       )}
                     </button>
@@ -577,7 +577,7 @@ export default function ImageEditing() {
                         <span>复杂的修改可能需要多次尝试，可以使用之前的结果继续修改</span>
                       </li>
                     </ul>
-                    <p className="mt-3 text-xs text-indigo-600">每次修改消耗 12 积分，修改后的图像归您所有</p>
+                    <p className="mt-3 text-xs text-indigo-600">每次修改消耗 5 积分，修改后的图像归您所有</p>
                   </div>
                 </div>
               </div>
