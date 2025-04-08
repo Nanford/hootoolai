@@ -7,6 +7,7 @@ import {
   FaInfoCircle, FaCrown, FaChevronDown, FaChevronRight, 
   FaCode, FaCopy, FaEye, FaExpand, FaCompress
 } from 'react-icons/fa';
+import { supabase } from '../../../utils/supabase';
 
 export default function ArtCards() {
   const [prompt, setPrompt] = useState('');
@@ -102,11 +103,21 @@ export default function ArtCards() {
           ratio
         });
       } else {
+        // 获取认证令牌
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        
+        if (!token) {
+          console.error('无法获取认证令牌');
+          throw new Error('认证失败，请重新登录');
+        }
+        
         // 调用后端API生成杂志卡片
         const response = await fetch('/api/generate-art-card', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // 添加认证令牌
           },
           body: JSON.stringify({
             topic: topic,

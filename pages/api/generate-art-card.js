@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
   );
 
   // 处理预检请求
@@ -24,14 +24,21 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 获取当前认证的用户
-    const { data: { session }, error: authError } = await supabase.auth.getSession();
+    // 从请求头获取令牌
+    const token = req.headers.authorization?.split(' ')[1];
     
-    if (authError || !session) {
-      return res.status(401).json({ error: '未授权, 请先登录' });
+    if (!token) {
+      return res.status(401).json({ error: '未授权，缺少令牌' });
+    }
+    
+    // 使用令牌验证用户
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      return res.status(401).json({ error: '未授权，无效令牌' });
     }
 
-    const userId = session.user.id;
+    const userId = user.id;
     
     const { topic, style } = req.body;
 
